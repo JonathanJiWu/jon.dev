@@ -1,0 +1,89 @@
+---
+/** A smaller project: one card, linking straight to its code. */
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+const { project } = Astro.props;
+const { title, summary, kind, period, stack, status, links } = project.data;
+const primary = links.find((l) => l.kind === 'play') ?? links.find((l) => l.kind === 'source') ?? links[0];
+---
+
+<article class="mini panel">
+  <p class="kicker">{kind} · {period}</p>
+  <h4>
+    {
+      primary ? (
+        <a href={primary.href}>
+          {title} <span aria-hidden="true">↗</span>
+        </a>
+      ) : (
+        title
+      )
+    }
+  </h4>
+  {status && <p class="status">{status}</p>}
+  <p class="summary">{summary}</p>
+  <ul class="chips" aria-label="Stack">
+    {stack.map((s) => <li>{s}</li>)}
+  </ul>
+</article>
+
+<style>
+  .mini {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 0.6rem;
+    padding: 1.1rem 1.2rem 1.2rem;
+    transition: border-color 0.2s;
+  }
+
+  .mini:hover,
+  .mini:focus-within {
+    border-color: var(--magenta);
+  }
+
+  h4 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    line-height: 1.3;
+  }
+
+  h4 a {
+    text-decoration: none;
+  }
+
+  h4 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  h4 a span {
+    color: var(--ink-3);
+    font-size: 0.85em;
+  }
+
+  .status {
+    justify-self: start;
+    color: var(--amber);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .summary {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .chips :global(li) {
+    font-size: 0.78rem;
+  }
+</style>

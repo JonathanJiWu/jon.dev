@@ -36,10 +36,30 @@ All the text comes from two places. You shouldn't need to touch any markup.
 
 - **`src/data/profile.ts`** holds the intro, bio, facts, skills, experience,
   education and the robotics/teaching cards. To add a role, append to `experience`.
-- **`src/content/projects/*.md`** holds the case studies, one Markdown file per
-  project. The frontmatter is validated at build time against the schema in
-  `src/content.config.ts`, so a typo fails the build instead of shipping. `order`
-  sets the order of the cards.
+- **`src/content/projects/*.md`** holds the projects, one Markdown file each. The
+  frontmatter is validated at build time against the schema in
+  `src/content.config.ts`, so a typo fails the build instead of shipping:
+
+  ```yaml
+  ---
+  title: EyeLevel
+  summary: One or two sentences for the card.
+  kind: Personal            # Professional | Personal | Study | Teaching
+  period: Since 2025
+  stack: [React Native, Expo, TypeScript]
+  order: 5                  # card order, ascending
+  featured: true            # true: card with screenshot + its own page; false: compact card
+  status: In progress       # optional tag
+  image: ../../assets/projects/eyelevel.webp   # optional; needs imageAlt
+  imageAlt: What the screenshot shows, for screen readers.
+  links:
+    - { label: Play it, href: https://example.com, kind: play }   # play | download | source | other
+  ---
+  The case study, in Markdown (featured projects only).
+  ```
+
+  "Play" and "Download" links appear as buttons on the card. Put screenshots in
+  `src/assets/projects/`; Astro resizes and converts them at build time.
 
 After changing how the scene *looks*, regenerate the still image and the social card:
 

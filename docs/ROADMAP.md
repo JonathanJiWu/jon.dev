@@ -40,10 +40,26 @@ résumé always works no matter what the 3D is doing.
 2. **Deepen the C-130J case study** (`src/content/projects/c130j-pneumatics.md`). Cover
    how the pressurization loop was structured, how you validated it, the hardest bug,
    and what you'd do differently. Recruiters remember specifics.
-3. **Pick GitHub projects to feature.** Candidates from your public repos:
-   `star-system`, `motionSimulation`, `vector3d`, `PongCppRaylib`, `Cyberpunk-2D77`,
-   `Isles-of-Resistance`. Each one is a Markdown file in `src/content/projects/`.
-4. **Own the flight model.** Read `src/sim/`. It's your domain. Re-tune the parameters in
+3. ~~Pick GitHub projects to feature.~~ Done:
+   - **Case studies:** Isles of Resistance, Cyberpunk 2D77 and EyeLevel.
+   - **Compact cards:** Star System, Pong, motionSimulation and vector3d.
+4. **EyeLevel update notes** (`src/content/projects/eyelevel.md` is the page to refresh as it changes):
+   - Move the TMDB key out of `app/config/tmdbConfig.ts`. Rotate it in your TMDB account
+     settings, then read it from an `EXPO_PUBLIC_TMDB_API_KEY` entry in a git-ignored `.env`.
+   - Upgrading from Expo SDK 52: step one SDK at a time with `npx expo install expo@^NN --fix`
+     and Expo's per-version changelogs.
+   - A live demo would lift the card. The app already builds for the web (`expo start --web`,
+     react-native-web), so a hosted web build plus an Android preview build would let
+     recruiters try it.
+   - Consider archiving the older watchlist repos (`eye-level`, `eyelevel-v3-frontend`,
+     `movie-watchlist*`) so visitors land on the current one. Keep
+     `movie-watchlist-react-springboot-mysql` public: the EyeLevel page links to it as the 2021 version.
+5. **Small fixes on GitHub:**
+   - `vector3d/README.md` lists subtract, dot product and normalize as done, but they're
+     commented out in `vector3d.py`.
+   - `PongCppRaylib` has a known velocity bug noted in `Ball.cpp`.
+   - Reviewers do click through, so these are worth tidying.
+6. **Own the flight model.** Read `src/sim/`. It's your domain. Re-tune the parameters in
    `aircraft.ts` and the gains in `autopilot.ts`, and keep `npm test` green. That makes it
    genuinely yours to discuss in interviews.
 

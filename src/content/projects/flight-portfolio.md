@@ -4,10 +4,13 @@ summary: The aircraft behind these pages flies a point-mass flight model and a t
 kind: Personal
 period: '2026'
 stack: [TypeScript, Three.js, WebGL2, GLSL, Astro, Vitest]
-order: 2
+order: 4
+image: ../../assets/poster.jpg
+imageAlt: The site's live scene at dusk, with a four-engine transport banking on its magenta holding pattern over contour-lined hills, and a lit runway below.
 links:
   - label: Source on GitHub
     href: https://github.com/JonathanJiWu/jon.dev
+    kind: source
 ---
 
 ## Why a flight model

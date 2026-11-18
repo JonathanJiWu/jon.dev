@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import Leg from '../components/Leg.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import ProjectMini from '../components/ProjectMini.astro';
 import ExperienceLog from '../components/ExperienceLog.astro';
 import FlightPlan from '../components/FlightPlan.astro';
 import SceneMount from '../components/SceneMount.astro';
@@ -11,6 +12,8 @@ import EngineeringPanel from '../components/EngineeringPanel.astro';
 import { about, beyond, facts, profile, skills } from '../data/profile';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const featured = projects.filter((p) => p.data.featured);
+const more = projects.filter((p) => !p.data.featured);
 ---
 
 <Base home>
@@ -54,13 +57,25 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
   <Leg
     waypoint="work"
     title="Selected work"
-    intro="Each one covers the problem, what was built, and what came of it."
+    intro="Simulation, games and apps. Each case study covers the problem, what was built, and how it was tested and shipped."
   >
     <div class="cards">
-      {projects.map((p) => <ProjectCard project={p} />)}
+      {featured.map((p) => <ProjectCard project={p} />)}
     </div>
+    {
+      more.length > 0 && (
+        <>
+          <h3 class="block-title">More projects</h3>
+          <div class="minis">
+            {more.map((p) => (
+              <ProjectMini project={p} />
+            ))}
+          </div>
+        </>
+      )
+    }
     <p class="aside-link">
-      More code, from C++ and Raylib experiments to coursework, is on <a href={profile.links.github}>GitHub</a>.
+      Everything else, including coursework, is on <a href={profile.links.github}>GitHub</a>.
     </p>
   </Leg>
 
@@ -161,6 +176,12 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
   .cards {
     display: grid;
     gap: 1rem;
+  }
+
+  .minis {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 0.85rem;
   }
 
   .aside-link {
