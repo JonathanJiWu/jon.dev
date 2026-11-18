@@ -1,0 +1,57 @@
+# Test, type-check and build on every pull request; deploy to GitHub Pages from main.
+#
+# One-time setup: repository Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#
+# The site URL and base path come from actions/configure-pages, so a custom domain or a
+# rename to <user>.github.io needs no code change (see astro.config.mjs).
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  # Cancel superseded PR builds, but never interrupt a deployment in progress.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Read the Pages URL
+        id: pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Test, type-check and build
+        uses: withastro/action@v6
+        with:
+          node-version: 22
+          build-cmd: npm run ci
+        env:
+          SITE_URL: ${{ steps.pages.outputs.origin }}
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          ASTRO_TELEMETRY_DISABLED: 1
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
