@@ -1,0 +1,186 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { url } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { title, summary, kind, org, role, period, stack, links } = project.data;
+const { Content } = await render(project);
+---
+
+<Base title={title} description={summary} type="article">
+  <article class="case">
+    <a class="back mono" href={url('/#work')}>← Selected work</a>
+    <header class="case-head">
+      <p class="kicker">{kind} · {period}</p>
+      <h1>{title}</h1>
+      <p class="summary">{summary}</p>
+      <dl class="facts">
+        {
+          org && (
+            <div>
+              <dt>Organization</dt>
+              <dd>{org}</dd>
+            </div>
+          )
+        }
+        {
+          role && (
+            <div>
+              <dt>Role</dt>
+              <dd>{role}</dd>
+            </div>
+          )
+        }
+        <div>
+          <dt>Stack</dt>
+          <dd>
+            <ul class="chips">
+              {stack.map((s) => <li>{s}</li>)}
+            </ul>
+          </dd>
+        </div>
+      </dl>
+      {
+        links.length > 0 && (
+          <p class="links">
+            {links.map((l) => (
+              <a class="btn" href={l.href}>
+                {l.label} <span aria-hidden="true">↗</span>
+              </a>
+            ))}
+          </p>
+        )
+      }
+    </header>
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .case {
+    position: relative;
+    z-index: 1;
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: calc(var(--header-h) + 3rem) var(--gutter) 6rem;
+  }
+
+  .back {
+    display: inline-block;
+    margin-bottom: 2.5rem;
+    color: var(--ink-3);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--magenta);
+  }
+
+  .case-head {
+    display: grid;
+    gap: 1rem;
+    padding-bottom: 2.5rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 1.5rem + 2.6vw, 3.4rem);
+  }
+
+  .summary {
+    font-size: 1.2rem;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .facts {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0.5rem 0 0;
+  }
+
+  .facts div {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+  }
+
+  .facts dt {
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .facts dd {
+    margin: 0;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .prose :global(h2) {
+    margin: 2.75rem 0 1rem;
+    font-size: 1.5rem;
+  }
+
+  .prose :global(p),
+  .prose :global(ul) {
+    margin: 0 0 1.1rem;
+    color: var(--ink-2);
+  }
+
+  .prose :global(ul) {
+    padding-left: 1.2rem;
+  }
+
+  .prose :global(li) {
+    margin-bottom: 0.45rem;
+  }
+
+  .prose :global(li::marker) {
+    color: var(--magenta);
+  }
+
+  .prose :global(strong) {
+    color: var(--ink);
+  }
+
+  .prose :global(pre) {
+    margin: 0 0 1.4rem;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg-2) !important;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .prose :global(code) {
+    font-family: var(--font-mono);
+  }
+
+  @media (max-width: 520px) {
+    .facts div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+  }
+</style>

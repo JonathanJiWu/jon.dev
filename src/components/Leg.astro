@@ -1,0 +1,87 @@
+---
+/**
+ * A section of the home page, and a leg of the flight plan: scrolling it into view
+ * sends the aircraft to its waypoint (see src/scripts/boot.ts).
+ */
+import { ROUTE } from '../world/route';
+
+interface Props {
+  /** Route stop id; the section id comes from the route. */
+  waypoint: string;
+  title: string;
+  intro?: string;
+}
+
+const { waypoint, title, intro } = Astro.props;
+const stop = ROUTE.find((r) => r.id === waypoint);
+if (!stop) throw new Error(`No route stop "${waypoint}"`);
+const index = ROUTE.indexOf(stop);
+---
+
+<section id={stop.section} class="leg" data-waypoint={stop.id} aria-labelledby={`${stop.section}-title`}>
+  <header class="leg-head">
+    <p class="leg-fix" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 1.5 14.6 9.4 22.5 12 14.6 14.6 12 22.5 9.4 14.6 1.5 12 9.4 9.4Z"></path></svg>
+      <span class="fix">{stop.fix}</span>
+      <span class="seq">WPT {String(index).padStart(2, '0')}</span>
+      <span class="dtg" data-dtg={stop.id}></span>
+    </p>
+    <h2 id={`${stop.section}-title`}>{title}</h2>
+    {intro && <p class="leg-intro">{intro}</p>}
+  </header>
+  <div class="leg-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .leg {
+    position: relative;
+    padding: clamp(5rem, 14vh, 9rem) var(--gutter);
+    max-width: calc(var(--content) + 2 * var(--gutter));
+  }
+
+  .leg-head {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .leg-fix {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-3);
+  }
+
+  .leg-fix svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    fill: var(--magenta);
+  }
+
+  .leg-fix .fix {
+    color: var(--magenta);
+  }
+
+  .leg-fix .dtg {
+    color: var(--cyan);
+  }
+
+  .leg-fix .dtg:not(:empty)::before {
+    content: '· ';
+    color: var(--ink-3);
+  }
+
+  h2 {
+    text-shadow: 0 2px 24px rgb(5 8 15 / 0.7);
+  }
+
+  .leg-intro {
+    color: var(--ink-2);
+    max-width: 38rem;
+  }
+</style>

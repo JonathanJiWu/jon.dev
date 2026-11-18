@@ -1,0 +1,258 @@
+---
+/**
+ * "Look under the hood": live readouts from the simulation, a strip chart of the
+ * control loops, the forces drawn on the aircraft, and the real-time loop's timing.
+ * Values are filled in by src/scene/engineering.ts while the panel is open.
+ */
+import { url } from '../lib/url';
+---
+
+<aside class="eng-panel panel" id="engineering-view" aria-label="Engineering view" data-eng-panel hidden>
+  <div class="eng-head">
+    <span class="kicker">Engineering view</span>
+    <button type="button" class="close" data-action="engineering" aria-label="Close the engineering view">×</button>
+  </div>
+
+  <section>
+    <h3>Autopilot</h3>
+    <dl class="grid">
+      <div><dt>Mode</dt><dd data-eng="mode">—</dd></div>
+      <div><dt>Target</dt><dd data-eng="target">—</dd></div>
+      <div><dt>Dist to go</dt><dd data-eng="dtg">—</dd></div>
+      <div><dt>Track err</dt><dd data-eng="xtk">—</dd></div>
+      <div><dt>Course cmd</dt><dd data-eng="crs">—</dd></div>
+      <div><dt>Bank / cmd</dt><dd data-eng="bank">—</dd></div>
+      <div><dt>Alt / cmd</dt><dd data-eng="alt">—</dd></div>
+      <div><dt>V/S</dt><dd data-eng="vs">—</dd></div>
+      <div><dt>TAS</dt><dd data-eng="tas">—</dd></div>
+      <div><dt>AoA</dt><dd data-eng="aoa">—</dd></div>
+      <div><dt>FPA / cmd</dt><dd data-eng="gamma">—</dd></div>
+      <div><dt>Throttle</dt><dd data-eng="thr">—</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h3>Loop response · last 30 s</h3>
+    <canvas class="strip" data-eng-strip width="640" height="260"></canvas>
+    <ul class="legend">
+      <li><i class="sw bank"></i>bank</li>
+      <li><i class="sw cmd"></i>bank command</li>
+      <li><i class="sw alt"></i>altitude error</li>
+      <li><i class="sw xtk"></i>track error</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>Forces</h3>
+    <dl class="grid">
+      <div><dt class="f-lift">Lift</dt><dd data-eng="lift">—</dd></div>
+      <div><dt class="f-drag">Drag</dt><dd data-eng="drag">—</dd></div>
+      <div><dt class="f-thrust">Thrust</dt><dd data-eng="thrust">—</dd></div>
+      <div><dt class="f-weight">Weight</dt><dd data-eng="weight">—</dd></div>
+      <div><dt>L/D</dt><dd data-eng="ld">—</dd></div>
+      <div><dt>Load factor</dt><dd data-eng="nz">—</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h3>Real-time loop</h3>
+    <dl class="grid">
+      <div><dt>Physics</dt><dd>120 Hz · RK4</dd></div>
+      <div><dt>Autopilot</dt><dd>60 Hz</dd></div>
+      <div><dt>Steps/frame</dt><dd data-eng="spf">—</dd></div>
+      <div><dt>Frame</dt><dd data-eng="frame">—</dd></div>
+      <div><dt>Render scale</dt><dd data-eng="dpr">—</dd></div>
+      <div><dt>Draw calls</dt><dd data-eng="calls">—</dd></div>
+    </dl>
+    <div class="rate" role="group" aria-label="Simulation rate">
+      <span>Sim rate</span>
+      <button type="button" data-sim-rate="1" aria-pressed="true">×1</button>
+      <button type="button" data-sim-rate="2" aria-pressed="false">×2</button>
+      <button type="button" data-sim-rate="4" aria-pressed="false">×4</button>
+    </div>
+  </section>
+
+  <p class="foot">
+    A simplified 3-DOF point-mass model with a generic transport's numbers.
+    <a href={url('/projects/flight-portfolio/')}>How it works</a>
+  </p>
+</aside>
+
+<style>
+  .eng-panel {
+    position: fixed;
+    top: calc(var(--header-h) + 0.5rem);
+    right: var(--gutter);
+    z-index: 25;
+    width: 23rem;
+    max-height: calc(100vh - var(--header-h) - 2rem);
+    overflow-y: auto;
+    padding: 0.9rem 1rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    overscroll-behavior: contain;
+  }
+
+  .eng-panel[hidden] {
+    display: none;
+  }
+
+  .eng-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .close {
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  section {
+    padding: 0.7rem 0 0.2rem;
+  }
+
+  h3 {
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+    margin: 0;
+  }
+
+  /* Stacked label over value: long readouts never wrap mid-number. */
+  .grid div {
+    display: grid;
+    gap: 0.05rem;
+    min-width: 0;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px dashed rgb(176 196 228 / 0.08);
+  }
+
+  dt {
+    color: var(--ink-3);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--cyan);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .f-lift { color: var(--cyan); }
+  .f-drag { color: var(--amber); }
+  .f-thrust { color: var(--green); }
+  .f-weight { color: var(--ink-2); }
+
+  .strip {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 640 / 260;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgb(3 6 12 / 0.6);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.9rem;
+    margin: 0.45rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-3);
+  }
+
+  .sw {
+    display: inline-block;
+    width: 0.9rem;
+    height: 2px;
+    margin-right: 0.35rem;
+    vertical-align: middle;
+  }
+
+  .sw.bank { background: var(--cyan); }
+  .sw.cmd { background: repeating-linear-gradient(to right, var(--magenta) 0 3px, transparent 3px 5px); }
+  .sw.alt { background: var(--amber); }
+  .sw.xtk { background: var(--green); }
+
+  .rate {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.7rem;
+    color: var(--ink-3);
+  }
+
+  .rate span {
+    margin-right: auto;
+  }
+
+  .rate button {
+    min-width: 2.6rem;
+    padding: 0.3rem 0.4rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-2);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .rate button[aria-pressed='true'] {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgb(103 212 234 / 0.1);
+  }
+
+  .foot {
+    margin-top: 0.8rem;
+    color: var(--ink-3);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  /* On wide screens the panel takes the flight plan's place (it shows mode, target and distance itself). */
+  @media (min-width: 1081px) {
+    :global(html.engineering .fms) {
+      display: none;
+    }
+  }
+
+  @media (max-width: 1080px) {
+    .eng-panel {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: auto;
+      max-height: 58vh;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+  }
+</style>

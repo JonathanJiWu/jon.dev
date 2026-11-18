@@ -1,0 +1,213 @@
+---
+import { url } from '../lib/url';
+import { profile } from '../data/profile';
+
+interface Props {
+  home?: boolean;
+}
+const { home = false } = Astro.props;
+
+// On the home page these are in-page anchors; elsewhere they point back home.
+const prefix = home ? '' : url('/');
+const nav = [
+  { href: '#about', label: 'About' },
+  { href: '#work', label: 'Work' },
+  { href: '#experience', label: 'Experience' },
+  { href: '#beyond', label: 'Teaching' },
+  { href: '#contact', label: 'Contact' },
+];
+---
+
+<header class="site-header">
+  <a class="brand" href={url('/')}>
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 1.5 14.6 9.4 22.5 12 14.6 14.6 12 22.5 9.4 14.6 1.5 12 9.4 9.4Z" />
+    </svg>
+    <span>{profile.name}</span>
+  </a>
+
+  <nav class="nav-wide" aria-label="Sections">
+    <ul>
+      {nav.map((n) => <li><a href={`${prefix}${n.href}`}>{n.label}</a></li>)}
+    </ul>
+  </nav>
+
+  <div class="header-tools">
+    {
+      home && (
+        <button type="button" class="scene-toggle" data-scene-toggle aria-pressed="false" hidden>
+          <span class="dot" aria-hidden="true" />
+          <span class="label">3D</span>
+          <span class="sr-only">live background</span>
+        </button>
+      )
+    }
+    <details class="nav-narrow">
+      <summary>Menu</summary>
+      <nav aria-label="Sections (menu)">
+        <ul>
+          {nav.map((n) => <li><a href={`${prefix}${n.href}`}>{n.label}</a></li>)}
+        </ul>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<script>
+  // Close the narrow menu after choosing a section.
+  document.querySelectorAll<HTMLDetailsElement>('.nav-narrow').forEach((d) => {
+    d.addEventListener('click', (e) => {
+      if ((e.target as Element).closest('a')) d.open = false;
+    });
+  });
+</script>
+
+<style>
+  .site-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 30;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0 var(--gutter);
+    background: linear-gradient(to bottom, rgb(5 8 15 / 0.92), rgb(5 8 15 / 0.55) 70%, transparent);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .brand-mark {
+    width: 1.15rem;
+    height: 1.15rem;
+    fill: var(--magenta);
+  }
+
+  .nav-wide {
+    margin-left: auto;
+  }
+
+  .nav-wide ul,
+  .nav-narrow ul {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav-wide a,
+  .nav-narrow a {
+    display: block;
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+
+  .nav-wide a:hover,
+  .nav-narrow a:hover {
+    color: var(--ink);
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  .header-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .scene-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.25rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgb(10 16 29 / 0.6);
+    color: var(--ink-2);
+    font: 0.75rem/1 var(--font-mono);
+    letter-spacing: 0.12em;
+    cursor: pointer;
+  }
+
+  .scene-toggle .dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+
+  .scene-toggle[aria-pressed='true'] .dot {
+    background: var(--green);
+    box-shadow: 0 0 0.5rem var(--green);
+  }
+
+  .scene-toggle:hover {
+    border-color: var(--magenta);
+    color: var(--ink);
+  }
+
+  .nav-narrow {
+    display: none;
+    position: relative;
+  }
+
+  .nav-narrow summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font: 0.75rem/1.2 var(--font-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .nav-narrow summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .nav-narrow nav {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    min-width: 12rem;
+    padding: 0.4rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel-strong);
+  }
+
+  .nav-narrow ul {
+    flex-direction: column;
+  }
+
+  @media (max-width: 760px) {
+    .nav-wide {
+      display: none;
+    }
+    .header-tools {
+      margin-left: auto;
+    }
+    .nav-narrow {
+      display: block;
+    }
+  }
+</style>

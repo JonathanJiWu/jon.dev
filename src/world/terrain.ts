@@ -30,7 +30,12 @@ export const AIRFIELD = {
 };
 
 function hills(x: number, z: number): number {
-  return 120 + 140 * fbm(x / 5200, z / 5200, 4, WORLD_SEED) + 55 * fbm(x / 1500, z / 1500, 3, WORLD_SEED + 7);
+  return (
+    130 +
+    230 * fbm(x / 5200, z / 5200, 4, WORLD_SEED) +
+    85 * fbm(x / 1500, z / 1500, 3, WORLD_SEED + 7) +
+    70 * ridged(x / 2600, z / 2600, 3, WORLD_SEED + 13)
+  );
 }
 
 function mountains(x: number, z: number): number {

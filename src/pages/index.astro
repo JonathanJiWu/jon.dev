@@ -1,0 +1,214 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import Leg from '../components/Leg.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import ExperienceLog from '../components/ExperienceLog.astro';
+import FlightPlan from '../components/FlightPlan.astro';
+import SceneMount from '../components/SceneMount.astro';
+import EngineeringPanel from '../components/EngineeringPanel.astro';
+import { about, beyond, facts, profile, skills } from '../data/profile';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base home>
+  <SceneMount slot="background" />
+
+  <Hero />
+
+  <Leg waypoint="about" title="About">
+    <div class="about panel">
+      <div class="prose">
+        {about.map((p) => <p>{p}</p>)}
+      </div>
+      <dl class="facts">
+        {
+          facts.map((f) => (
+            <div>
+              <dt>{f.label}</dt>
+              <dd>{f.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+    <h3 class="block-title">Skills</h3>
+    <div class="skills">
+      {
+        skills.map((g) => (
+          <div class="skill-group">
+            <p class="kicker">{g.group}</p>
+            <ul class="chips">
+              {g.items.map((i) => (
+                <li>{i}</li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </Leg>
+
+  <Leg
+    waypoint="work"
+    title="Selected work"
+    intro="Each one covers the problem, what was built, and what came of it."
+  >
+    <div class="cards">
+      {projects.map((p) => <ProjectCard project={p} />)}
+    </div>
+    <p class="aside-link">
+      More code, from C++ and Raylib experiments to coursework, is on <a href={profile.links.github}>GitHub</a>.
+    </p>
+  </Leg>
+
+  <Leg waypoint="experience" title="Experience">
+    <ExperienceLog />
+  </Leg>
+
+  <Leg
+    waypoint="beyond"
+    title="Robotics, teaching and hardware"
+    intro="Away from the simulator: teaching programming and robotics, and years of hands-on hardware work."
+  >
+    <div class="beyond">
+      {
+        beyond.map((b) => (
+          <article class="panel">
+            <h3>{b.title}</h3>
+            <p>{b.body}</p>
+            <p class="source mono">{b.source}</p>
+          </article>
+        ))
+      }
+    </div>
+  </Leg>
+
+  <Leg waypoint="contact" title="Contact" intro="The fastest way to reach me is email or LinkedIn.">
+    <ul class="contact">
+      <li>
+        <a class="btn primary" href={`mailto:${profile.email}`}>Email</a>
+      </li>
+      <li><a class="btn" href={profile.links.linkedin} rel="me">LinkedIn <span aria-hidden="true">↗</span></a></li>
+      <li><a class="btn" href={profile.links.github} rel="me">GitHub <span aria-hidden="true">↗</span></a></li>
+      <li>
+        <a class="btn" href={profile.links.writing} rel="me">Writing: Critical Bits <span aria-hidden="true">↗</span></a>
+      </li>
+    </ul>
+    <p class="email mono">{profile.email}</p>
+  </Leg>
+
+  <FlightPlan />
+  <EngineeringPanel />
+</Base>
+
+<style>
+  .about {
+    display: grid;
+    gap: 1.75rem;
+    padding: 1.75rem;
+  }
+
+  .prose {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .facts {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .facts div {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 1rem;
+  }
+
+  .facts dt {
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-top: 0.2rem;
+  }
+
+  .facts dd {
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .block-title {
+    margin: 2.5rem 0 1rem;
+  }
+
+  .skills {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .skill-group {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .cards {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .aside-link {
+    margin-top: 1.5rem;
+    color: var(--ink-2);
+  }
+
+  .beyond {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .beyond article {
+    display: grid;
+    gap: 0.6rem;
+    padding: 1.4rem 1.5rem;
+  }
+
+  .beyond p {
+    color: var(--ink-2);
+  }
+
+  .beyond .source {
+    color: var(--ink-3);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .email {
+    margin-top: 1.25rem;
+    color: var(--ink-3);
+    font-size: 0.85rem;
+    user-select: all;
+  }
+
+  @media (max-width: 520px) {
+    .facts div {
+      grid-template-columns: 1fr;
+      gap: 0.1rem;
+    }
+  }
+</style>

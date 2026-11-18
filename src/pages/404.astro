@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/url';
+---
+
+<Base title="Off course" description="This page isn't on the flight plan.">
+  <section class="lost">
+    <p class="kicker">Error 404 · Route discontinuity</p>
+    <h1>Off course.</h1>
+    <p>This page isn't on the flight plan. Let's go direct to somewhere that is.</p>
+    <p class="actions">
+      <a class="btn primary" href={url('/')}>Direct to home</a>
+      <a class="btn" href={url('/#work')}>Selected work</a>
+    </p>
+  </section>
+</Base>
+
+<style>
+  .lost {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    align-content: center;
+    gap: 1.25rem;
+    min-height: 80vh;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: calc(var(--header-h) + 2rem) var(--gutter) 4rem;
+  }
+
+  .lost p {
+    color: var(--ink-2);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+</style>

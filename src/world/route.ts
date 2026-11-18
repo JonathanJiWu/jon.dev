@@ -18,12 +18,12 @@ export interface RouteStop extends Waypoint {
 const HOLD = 1250;
 
 export const ROUTE: readonly RouteStop[] = [
-  { id: 'home', fix: 'KJWU', section: 'top', label: 'Home', x: AIRFIELD.x, z: AIRFIELD.z, altitude: 650, orbitRadius: HOLD },
-  { id: 'about', fix: 'ABOUT', section: 'about', label: 'About', x: 5200, z: -1800, altitude: 760, orbitRadius: HOLD },
-  { id: 'work', fix: 'WORKS', section: 'work', label: 'Selected work', x: 2000, z: -900, altitude: 840, orbitRadius: HOLD },
-  { id: 'experience', fix: 'LOGBK', section: 'experience', label: 'Experience', x: -1200, z: -2400, altitude: 800, orbitRadius: HOLD },
-  { id: 'beyond', fix: 'TEACH', section: 'beyond', label: 'Robotics & teaching', x: -4300, z: -600, altitude: 900, orbitRadius: HOLD },
-  { id: 'contact', fix: 'RADIO', section: 'contact', label: 'Contact', x: -7400, z: -2000, altitude: 950, orbitRadius: HOLD },
+  { id: 'home', fix: 'KJWU', section: 'top', label: 'Home', x: AIRFIELD.x, z: AIRFIELD.z, altitude: 780, orbitRadius: HOLD },
+  { id: 'about', fix: 'ABOUT', section: 'about', label: 'About', x: 5200, z: -1800, altitude: 880, orbitRadius: HOLD },
+  { id: 'work', fix: 'WORKS', section: 'work', label: 'Selected work', x: 2000, z: -900, altitude: 960, orbitRadius: HOLD },
+  { id: 'experience', fix: 'LOGBK', section: 'experience', label: 'Experience', x: -1200, z: -2400, altitude: 920, orbitRadius: HOLD },
+  { id: 'beyond', fix: 'TEACH', section: 'beyond', label: 'Robotics & teaching', x: -4300, z: -600, altitude: 1010, orbitRadius: HOLD },
+  { id: 'contact', fix: 'RADIO', section: 'contact', label: 'Contact', x: -7400, z: -2000, altitude: 1060, orbitRadius: HOLD },
 ];
 
 export const START_STOP = ROUTE[0]!;

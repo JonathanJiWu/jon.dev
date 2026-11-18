@@ -1,0 +1,353 @@
+/*
+ * Design tokens and base styles.
+ * Palette borrows avionics conventions: magenta = the flight plan, cyan = live data,
+ * amber = caution and warmth. Type: B612 (designed for Airbus cockpit displays) for
+ * display and HUD text, IBM Plex Sans for reading.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #05080f;
+  --bg-2: #0a101d;
+  --panel: rgb(8 12 22 / 0.74);
+  --panel-strong: rgb(8 12 22 / 0.9);
+  --line: rgb(176 196 228 / 0.14);
+  --line-strong: rgb(176 196 228 / 0.28);
+
+  --ink: #e9eef5;
+  --ink-2: #b6c2d1;
+  --ink-3: #8696ab;
+
+  --magenta: #f27ad9;
+  --magenta-dim: rgb(242 122 217 / 0.18);
+  --cyan: #67d4ea;
+  --amber: #f4b860;
+  --green: #74dca0;
+
+  --font-display: 'B612', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'B612 Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: clamp(1.6rem, 1.25rem + 1.4vw, 2.35rem);
+  --step-3: clamp(2.6rem, 1.6rem + 4.6vw, 5.6rem);
+
+  --radius: 14px;
+  --gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  --content: 44rem;
+  --header-h: 3.75rem;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+/* Author display rules must never defeat the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--step-3);
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: var(--step-2);
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: var(--step-1);
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--magenta);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+  transition: color 0.15s;
+}
+
+a:hover {
+  color: var(--magenta);
+}
+
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--magenta);
+  color: #14060f;
+}
+
+/* ---------- utilities ---------- */
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* HUD label: small caps-style monospace. */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Only shown when JavaScript is running (html.js is set inline in <head>). */
+html:not(.js) [data-js-only] {
+  display: none !important;
+}
+
+/* ---------- surfaces ---------- */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel {
+    background: var(--panel-strong);
+  }
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgb(10 16 29 / 0.6);
+  color: var(--ink);
+  font: 600 0.95rem/1.2 var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    color 0.2s,
+    transform 0.2s var(--ease-out);
+}
+
+.btn:hover {
+  border-color: var(--magenta);
+  color: var(--ink);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn.primary {
+  background: var(--magenta);
+  border-color: var(--magenta);
+  color: #1a0716;
+}
+
+.btn.primary:hover {
+  background: #f794e2;
+  border-color: #f794e2;
+  color: #1a0716;
+}
+
+.btn-quiet {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--magenta);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+  cursor: pointer;
+}
+
+.btn-quiet:hover {
+  color: var(--ink);
+}
+
+/* ---------- chips ---------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.03);
+  color: var(--ink-2);
+  font-size: var(--step--1);
+  line-height: 1.5;
+}
+
+/* ---------- scene-dependent UI ---------- */
+
+/* Readouts and controls that only make sense while the live scene runs. */
+html:not([data-scene='running']):not([data-scene='paused']) [data-scene-only] {
+  display: none !important;
+}
+
+/* The still-image capture for the poster/social card hides the page chrome. */
+html.poster-mode .site-header,
+html.poster-mode main,
+html.poster-mode .site-footer,
+html.poster-mode .fms,
+html.poster-mode .eng-panel,
+html.poster-mode .skip-link {
+  display: none !important;
+}
+
+/* Keep page content above the fixed scene. */
+main,
+.site-footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- fix labels floating over the 3D scene (created by src/scene/labels.ts) ---------- */
+
+.fix-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 0.4rem;
+  align-items: baseline;
+  padding: 0.25rem 0.5rem;
+  border-left: 1px solid rgb(201 214 234 / 0.5);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: rgb(226 234 245 / 0.95);
+  white-space: nowrap;
+  will-change: transform, opacity;
+  text-shadow: 0 1px 6px rgb(5 8 15 / 0.9);
+}
+
+.fix-label .fix-sym {
+  font-size: 0.6rem;
+  color: rgb(159 220 240 / 0.9);
+}
+
+.fix-label .fix-sub {
+  grid-column: 2;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: rgb(196 207 221 / 0.9);
+}
+
+.fix-label.active {
+  border-left-color: var(--magenta);
+  color: var(--magenta);
+}
+
+.fix-label.active .fix-sym {
+  color: var(--magenta);
+}

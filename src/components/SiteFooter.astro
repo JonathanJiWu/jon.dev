@@ -1,0 +1,41 @@
+---
+import { profile } from '../data/profile';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <p>© {year} {profile.name}</p>
+  <p class="colophon">
+    <span>Built with <a href="https://astro.build">Astro</a> and <a href="https://threejs.org">Three.js</a>.</span>
+    <span>Set in <a href="https://github.com/polarsys/b612">B612</a>, a typeface designed for Airbus cockpit displays, and IBM Plex Sans.</span>
+    <span><a href={profile.source}>Source on GitHub</a>.</span>
+  </p>
+</footer>
+
+<style>
+  .site-footer {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    padding: 2.5rem var(--gutter) 3rem;
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink-3);
+    font-size: var(--step--1);
+  }
+
+  .colophon {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.35em;
+    max-width: 46rem;
+  }
+
+  .site-footer a {
+    color: var(--ink-2);
+  }
+</style>

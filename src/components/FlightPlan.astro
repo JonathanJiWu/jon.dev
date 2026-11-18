@@ -1,0 +1,169 @@
+---
+/**
+ * The flight-plan page of an FMS, as site navigation. Every row is a plain link to a
+ * section; with the scene running, the active leg, distances and flight data are live.
+ */
+import { ROUTE } from '../world/route';
+---
+
+<aside class="fms panel" aria-label="Flight plan">
+  <div class="fms-head">
+    <span class="kicker">Flight plan</span>
+    <span class="mode mono" data-fms-mode aria-hidden="true"></span>
+  </div>
+  <ol class="legs">
+    {
+      ROUTE.map((stop) => (
+        <li>
+          <a href={`#${stop.section}`} data-leg={stop.id}>
+            <span class="fix">{stop.fix}</span>
+            <span class="label">{stop.label}</span>
+            <span class="dist" data-dist={stop.id} aria-hidden="true" />
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+  <dl class="data" data-scene-only aria-hidden="true">
+    <div><dt>GS</dt><dd data-readout="gs">---</dd></div>
+    <div><dt>ALT</dt><dd data-readout="alt">---</dd></div>
+    <div><dt>HDG</dt><dd data-readout="hdg">---</dd></div>
+  </dl>
+  <button type="button" class="eng" data-action="engineering" aria-pressed="false" data-scene-only>
+    Engineering view
+  </button>
+</aside>
+
+<style>
+  .fms {
+    position: fixed;
+    right: var(--gutter);
+    bottom: 1.5rem;
+    z-index: 20;
+    width: 19.5rem;
+    padding: 0.9rem 0.9rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  .fms-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0 0.35rem 0.6rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mode {
+    color: var(--green);
+    letter-spacing: 0.12em;
+  }
+
+  .legs {
+    margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .legs a {
+    display: grid;
+    grid-template-columns: 3.4rem 1fr auto;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.32rem 0.35rem;
+    border-radius: 6px;
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+
+  .legs a:hover {
+    background: rgb(255 255 255 / 0.05);
+    color: var(--ink);
+  }
+
+  .fix {
+    color: var(--ink);
+    letter-spacing: 0.08em;
+  }
+
+  .label {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dist {
+    color: var(--ink-3);
+  }
+
+  .legs a[aria-current='true'] {
+    background: var(--magenta-dim);
+  }
+
+  .legs a[aria-current='true'] .fix,
+  .legs a[aria-current='true'] .dist {
+    color: var(--magenta);
+  }
+
+  .legs a[aria-current='true'] .label {
+    color: var(--ink);
+  }
+
+  .data {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin: 0.6rem 0 0;
+    padding: 0.6rem 0.35rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .data div {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .data dt {
+    color: var(--ink-3);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+  }
+
+  .data dd {
+    margin: 0;
+    color: var(--cyan);
+    font-size: 0.9rem;
+  }
+
+  .eng {
+    width: 100%;
+    margin-top: 0.7rem;
+    padding: 0.5rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .eng:hover {
+    border-color: var(--cyan);
+  }
+
+  .eng[aria-pressed='true'] {
+    border-color: var(--cyan);
+    background: rgb(103 212 234 / 0.12);
+    color: var(--cyan);
+  }
+
+  @media (max-width: 1080px) {
+    .fms {
+      display: none;
+    }
+  }
+</style>

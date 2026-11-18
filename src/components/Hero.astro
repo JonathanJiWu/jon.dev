@@ -1,0 +1,145 @@
+---
+import { intro, profile } from '../data/profile';
+---
+
+<section id="top" class="hero" data-waypoint="home" aria-labelledby="hero-title">
+  <div class="hero-inner">
+    <p class="kicker">{profile.title} · {profile.focus}</p>
+    <h1 id="hero-title">{profile.name}</h1>
+    <p class="lead">{intro.lead}</p>
+    <p class="sub">{intro.sub}</p>
+    <div class="cta">
+      <a class="btn primary" href="#work">Selected work</a>
+      <a class="btn" href="#experience">Experience</a>
+      <a class="btn" href={profile.links.linkedin} rel="me">LinkedIn <span aria-hidden="true">↗</span></a>
+    </div>
+    <p class="scene-note" data-scene-note data-js-only aria-live="polite"></p>
+  </div>
+  <a class="scroll-cue" href="#about">
+    <span>Scroll to fly the route</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m0 0-6-6m6 6 6-6" /></svg>
+  </a>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: calc(var(--header-h) + 2rem) var(--gutter) clamp(4.5rem, 10vh, 7rem);
+  }
+
+  .hero-inner {
+    max-width: 40rem;
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  h1 {
+    text-shadow: 0 2px 30px rgb(5 8 15 / 0.6);
+  }
+
+  .lead {
+    font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem);
+    line-height: 1.5;
+    color: var(--ink);
+    max-width: 34rem;
+  }
+
+  .sub {
+    color: var(--ink-2);
+    font-size: var(--step--1);
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .scene-note {
+    max-width: 34rem;
+    margin-top: 0.6rem;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--line-strong);
+    color: var(--ink-2);
+    font-size: var(--step--1);
+    line-height: 1.6;
+  }
+
+  .scene-note:empty {
+    display: none;
+  }
+
+  .scene-note :global(.live) {
+    color: var(--green);
+    font-family: var(--font-mono);
+    letter-spacing: 0.12em;
+    margin-right: 0.4rem;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    left: var(--gutter);
+    bottom: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ink-3);
+    font: 0.72rem/1 var(--font-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: opacity 0.4s ease;
+  }
+
+  :global(html.past-hero) .scroll-cue {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .scroll-cue svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-cue svg {
+      animation: nudge 2.4s var(--ease-out) infinite;
+    }
+  }
+
+  @keyframes nudge {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+    }
+    30% {
+      transform: translateY(4px);
+    }
+  }
+
+  /* Narrow screens: leave a band of sky at the top for the aircraft (see scene/main.ts). */
+  @media (max-width: 760px) {
+    .hero {
+      justify-content: flex-start;
+      padding-top: calc(var(--header-h) + 30svh);
+      padding-bottom: 5rem;
+    }
+    .kicker {
+      letter-spacing: 0.08em;
+    }
+    .sub {
+      font-size: 0.8rem;
+    }
+  }
+</style>

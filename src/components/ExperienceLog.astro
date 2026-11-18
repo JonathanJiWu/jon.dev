@@ -1,0 +1,236 @@
+---
+import { additional, earlierExperience, education, experience, formatRange } from '../data/profile';
+---
+
+<ol class="log" aria-label="Roles">
+  {
+    experience.map((r) => (
+      <li class="entry panel">
+        <div class="meta">
+          <span class="mono when">{formatRange(r)}</span>
+          <span class="where">{r.location}</span>
+          {r.partTime && <span class="tag">Part-time</span>}
+        </div>
+        <h3>
+          {r.title} <span class="org">· {r.org}</span>
+        </h3>
+        <ul class="highlights">
+          {r.highlights.map((h) => (
+            <li>{h}</li>
+          ))}
+        </ul>
+      </li>
+    ))
+  }
+</ol>
+
+<details class="earlier panel">
+  <summary>
+    <span>Before software: policy, operations and community work</span>
+    <span class="mono">2013 – 2016</span>
+  </summary>
+  <ol class="log compact">
+    {
+      earlierExperience.map((r) => (
+        <li class="entry">
+          <div class="meta">
+            <span class="mono when">{formatRange(r)}</span>
+            <span class="where">{r.location}</span>
+          </div>
+          <h3>
+            {r.title} <span class="org">· {r.org}</span>
+          </h3>
+          <ul class="highlights">
+            {r.highlights.map((h) => (
+              <li>{h}</li>
+            ))}
+          </ul>
+        </li>
+      ))
+    }
+  </ol>
+  <h3 class="sub-h">Additional</h3>
+  <ul class="additional">
+    {
+      additional.map((a) => (
+        <li>
+          <span>
+            {a.title}, {a.org}
+          </span>
+          <span class="mono">
+            {a.location} · {a.year}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</details>
+
+<h3 class="edu-title" id="education">Education</h3>
+<ul class="edu">
+  {
+    education.map((e) => (
+      <li class="panel">
+        <span class="mono when">{e.years}</span>
+        <span class="cred">{e.credential}</span>
+        <span class="school">
+          {e.school}
+          {e.note && <span class="note"> · {e.note}</span>}
+        </span>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .log {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .entry {
+    padding: 1.4rem 1.5rem;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--ink-3);
+    font-size: var(--step--1);
+  }
+
+  .when {
+    color: var(--cyan);
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .tag {
+    padding: 0.05rem 0.5rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font-size: 0.75rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    line-height: 1.35;
+  }
+
+  .org {
+    color: var(--ink-2);
+    font-weight: 400;
+  }
+
+  .highlights {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0.75rem 0 0;
+    padding-left: 1.1rem;
+    color: var(--ink-2);
+  }
+
+  .highlights li::marker {
+    color: var(--magenta);
+  }
+
+  .earlier {
+    margin-top: 1rem;
+    padding: 0.25rem 1.5rem;
+  }
+
+  .earlier summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 1rem 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .earlier summary .mono {
+    color: var(--ink-3);
+    font-weight: 400;
+    font-size: 0.8rem;
+  }
+
+  .earlier[open] summary {
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 1rem;
+  }
+
+  .log.compact {
+    gap: 1.25rem;
+  }
+
+  .log.compact .entry {
+    padding: 0;
+  }
+
+  .sub-h {
+    margin: 1.5rem 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  .additional {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-2);
+    font-size: var(--step--1);
+  }
+
+  .additional li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+  }
+
+  .additional .mono {
+    color: var(--ink-3);
+  }
+
+  .edu-title {
+    margin: 3rem 0 1rem;
+    font-size: var(--step-1);
+  }
+
+  .edu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .edu li {
+    display: grid;
+    gap: 0.2rem;
+    padding: 1rem 1.2rem;
+  }
+
+  .cred {
+    font-weight: 600;
+  }
+
+  .school {
+    color: var(--ink-2);
+    font-size: var(--step--1);
+  }
+
+  .note {
+    color: var(--ink-3);
+  }
+</style>

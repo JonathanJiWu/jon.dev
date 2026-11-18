@@ -1,0 +1,75 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { url } from '../lib/url';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+const { project } = Astro.props;
+const { title, summary, kind, period, stack, org } = project.data;
+const href = url(`/projects/${project.id}/`);
+---
+
+<article class="card panel">
+  <p class="kicker">{kind} · {period}{org && ` · ${org}`}</p>
+  <h3><a href={href}>{title}</a></h3>
+  <p class="summary">{summary}</p>
+  <ul class="chips" aria-label="Stack">
+    {stack.map((s) => <li>{s}</li>)}
+  </ul>
+  <p class="more" aria-hidden="true">Read the case study <span>→</span></p>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    display: grid;
+    gap: 0.85rem;
+    padding: 1.5rem;
+    transition:
+      border-color 0.2s,
+      transform 0.3s var(--ease-out);
+  }
+
+  .card:hover,
+  .card:focus-within {
+    border-color: var(--magenta);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  h3 a {
+    text-decoration: none;
+  }
+
+  /* Whole card is the link target; the heading carries the accessible name. */
+  h3 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .summary {
+    color: var(--ink-2);
+  }
+
+  .more {
+    color: var(--magenta);
+    font-size: var(--step--1);
+    font-weight: 600;
+  }
+
+  .more span {
+    display: inline-block;
+    transition: transform 0.2s var(--ease-out);
+  }
+
+  .card:hover .more span {
+    transform: translateX(3px);
+  }
+</style>
