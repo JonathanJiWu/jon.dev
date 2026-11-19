@@ -1,60 +1,107 @@
 import { type PerspectiveCamera, Vector3 } from 'three';
-import type { RouteStop } from '../world/route';
+import type { FlightPlan } from '../sim/planner';
+import { AIRPORTS } from '../world/navdata';
+import { ROUTE } from '../world/route';
+
+type Kind = 'section' | 'airport' | 'approach' | 'marker';
+
+interface Label {
+  ident: string;
+  kind: Kind;
+  el: HTMLElement;
+  world: Vector3;
+  /** Fully visible within this distance, gone 40% beyond it [m]. */
+  range: number;
+}
+
+const RANGE: Record<Kind, number> = { section: 22_000, airport: 45_000, approach: 12_000, marker: 14_000 };
+const SYMBOL: Record<Kind, string> = { section: '◆', airport: '✈', approach: '◇', marker: '' };
 
 /**
- * Fix names floating above each waypoint, as HTML: crisp text at any resolution and
- * nothing to rasterize. Decorative (the container is aria-hidden); the same
- * information is in the page.
+ * Names floating in the world, as HTML: crisp text at any resolution and nothing to
+ * rasterize. The page's fixes (with their section names), the airports, and, per flight,
+ * the approach fixes and the top of climb and descent. Decorative (the container is
+ * aria-hidden); the same information is in the page and the flight-plan panel.
  */
 export class FixLabels {
-  private readonly items: { stop: RouteStop; el: HTMLElement; world: Vector3 }[];
+  private readonly fixed: Label[] = [];
+  private dynamic: Label[] = [];
   private readonly v = new Vector3();
-  private activeId = '';
+  private activeIdent = '';
+  private planKey = '';
 
-  constructor(
-    private readonly root: HTMLElement,
-    route: readonly RouteStop[],
-  ) {
+  constructor(private readonly root: HTMLElement) {
     root.replaceChildren();
-    this.items = route.map((stop) => {
-      const el = document.createElement('div');
-      el.className = 'fix-label';
-      const sym = document.createElement('span');
-      sym.className = 'fix-sym';
-      sym.textContent = '◆';
-      const name = document.createElement('span');
-      name.className = 'fix-name';
-      name.textContent = stop.fix;
-      const sub = document.createElement('span');
-      sub.className = 'fix-sub';
-      sub.textContent = stop.label;
-      el.append(sym, name, sub);
-      root.append(el);
-      return { stop, el, world: new Vector3(stop.x, stop.altitude + 160, stop.z) };
-    });
+    for (const stop of ROUTE.slice(1)) this.fixed.push(this.make(stop.fix, 'section', stop.label, new Vector3(stop.x, 1450, stop.z)));
+    for (const a of AIRPORTS) this.fixed.push(this.make(a.ident, 'airport', a.name, new Vector3(a.x, a.elevation + 260, a.z)));
   }
 
-  setActive(id: string): void {
-    if (id === this.activeId) return;
-    this.activeId = id;
-    for (const it of this.items) it.el.classList.toggle('active', it.stop.id === id);
+  private make(ident: string, kind: Kind, sub: string, world: Vector3): Label {
+    const el = document.createElement('div');
+    el.className = `fix-label ${kind}`;
+    if (SYMBOL[kind]) {
+      const sym = document.createElement('span');
+      sym.className = 'fix-sym';
+      sym.textContent = SYMBOL[kind];
+      el.append(sym);
+    }
+    const name = document.createElement('span');
+    name.className = 'fix-name';
+    name.textContent = ident;
+    el.append(name);
+    if (sub) {
+      const s = document.createElement('span');
+      s.className = 'fix-sub';
+      s.textContent = sub;
+      el.append(s);
+    }
+    this.root.append(el);
+    return { ident, kind, el, world, range: RANGE[kind] };
+  }
+
+  /** Approach fixes and the top of climb/descent for the plan being flown. */
+  setPlan(plan: FlightPlan): void {
+    const key = `${plan.id}:${plan.arrival.runway.ident}`;
+    if (key === this.planKey) return;
+    this.planKey = key;
+    for (const l of this.dynamic) l.el.remove();
+    this.dynamic = [];
+    const a = plan.approach;
+    const fixes = a.entry === 'straight-in' ? [[a.if, 'IAF / IF']] : [[a.iaf, 'IAF'], [a.if, 'IF']];
+    fixes.push([a.faf, 'FAF']);
+    for (const [fix, role] of fixes as [{ ident: string; x: number; z: number }, string][]) {
+      const leg = plan.legs.find((l) => l.ident === fix.ident);
+      this.dynamic.push(this.make(fix.ident, 'approach', role, new Vector3(fix.x, (leg?.altitude ?? 900) + 90, fix.z)));
+    }
+    this.dynamic.push(this.make('T/C', 'marker', '', new Vector3(plan.toc.point.x, plan.cruiseAltitude + 70, plan.toc.point.z)));
+    this.dynamic.push(this.make('T/D', 'marker', '', new Vector3(plan.tod.point.x, plan.cruiseAltitude + 70, plan.tod.point.z)));
+    this.activeIdent = '';
+  }
+
+  setActive(ident: string): void {
+    if (ident === this.activeIdent) return;
+    this.activeIdent = ident;
+    for (const l of [...this.fixed, ...this.dynamic]) l.el.classList.toggle('active', l.ident === ident);
   }
 
   update(camera: PerspectiveCamera, width: number, height: number): void {
-    for (const it of this.items) {
-      this.v.copy(it.world).project(camera);
-      const visible = this.v.z < 1 && Math.abs(this.v.x) < 1.15 && Math.abs(this.v.y) < 1.15;
-      if (!visible) {
-        it.el.style.opacity = '0';
-        continue;
-      }
-      const dist = camera.position.distanceTo(it.world);
-      const fade = Math.max(0, Math.min(1, (16_000 - dist) / 6000));
-      const x = (this.v.x * 0.5 + 0.5) * width;
-      const y = (-this.v.y * 0.5 + 0.5) * height;
-      it.el.style.opacity = String(fade);
-      it.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`;
+    for (const l of this.fixed) this.place(l, camera, width, height);
+    for (const l of this.dynamic) this.place(l, camera, width, height);
+  }
+
+  private place(l: Label, camera: PerspectiveCamera, width: number, height: number): void {
+    this.v.copy(l.world).project(camera);
+    const visible = this.v.z < 1 && Math.abs(this.v.x) < 1.15 && Math.abs(this.v.y) < 1.15;
+    const dist = camera.position.distanceTo(l.world);
+    const fade = visible ? Math.max(0, Math.min(1, (l.range * 1.4 - dist) / (l.range * 0.4))) : 0;
+    if (fade <= 0) {
+      if (l.el.style.opacity !== '0') l.el.style.opacity = '0';
+      return;
     }
+    const x = (this.v.x * 0.5 + 0.5) * width;
+    const y = (-this.v.y * 0.5 + 0.5) * height;
+    l.el.style.opacity = fade.toFixed(2);
+    l.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`;
   }
 
   dispose(): void {

@@ -8,8 +8,8 @@ export const SUN_DIR = new Vector3(
   -Math.cos(SUN.azimuth) * Math.cos(SUN.elevation),
 ).normalize();
 
-/** Exponential-squared fog: ~50% at 15 km; the mountain ring stays as silhouettes, the world's edge vanishes. */
-export const FOG_DENSITY = 5.4e-5;
+/** Exponential-squared fog: ~20% at 15 km, ~80% at 45 km where the mountains begin; the world edge (80 km) vanishes. */
+export const FOG_DENSITY = 2.8e-5;
 
 /** Contour interval for the terrain shader [m]. */
 export const CONTOUR_INTERVAL = 25;

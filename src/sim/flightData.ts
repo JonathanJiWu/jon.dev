@@ -71,6 +71,10 @@ export interface FlightData {
   headwind: number;
   crosswind: number;
 
+  /** Flight director: the pitch attitude and bank the autopilot is commanding [deg]. */
+  fdPitch: number;
+  fdBank: number;
+
   // Autoflight targets (what the mode control panel would show)
   selectedSpeed: number;
   selectedAltitude: number;
@@ -188,6 +192,8 @@ export function createFlightData(plan: FlightPlan): FlightData {
     windSpeed: 0,
     headwind: 0,
     crosswind: 0,
+    fdPitch: 0,
+    fdBank: 0,
     selectedSpeed: 0,
     selectedAltitude: 0,
     selectedCourse: 0,
@@ -336,6 +342,8 @@ export class FlightDataBus {
     d.eteDestination = fms.phase === 'takeoff' && gv.speed < 30 ? plan.ete : remaining;
     d.etaDestination = (d.clock + d.eteDestination) % 86_400;
     const st = sim.autopilot.status;
+    d.fdBank = st.bankCmd / DEG;
+    d.fdPitch = d.pitch + (sim.onGround ? 0 : (st.gammaCmd - gamma) / DEG + (st.alphaCmd - alpha) / DEG);
     d.crossTrack = t.lateral.mode === 'path' && t.lateral.path.kind === 'line' ? (st.trackError * M_TO_NM) : 0;
     d.verticalDeviation = fms.phase === 'descent' || fms.phase === 'final' ? fms.verticalDeviation * M_TO_FT : 0;
 

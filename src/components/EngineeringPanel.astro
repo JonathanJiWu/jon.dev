@@ -14,20 +14,24 @@ import { url } from '../lib/url';
   </div>
 
   <section>
-    <h3>Autopilot</h3>
+    <h3>Flight management · autopilot</h3>
     <dl class="grid">
-      <div><dt>Mode</dt><dd data-eng="mode">—</dd></div>
-      <div><dt>Target</dt><dd data-eng="target">—</dd></div>
+      <div><dt>Phase</dt><dd data-eng="phase">—</dd></div>
+      <div><dt>FMA</dt><dd data-eng="mode">—</dd></div>
+      <div><dt>Active fix</dt><dd data-eng="target">—</dd></div>
       <div><dt>Dist to go</dt><dd data-eng="dtg">—</dd></div>
       <div><dt>Track err</dt><dd data-eng="xtk">—</dd></div>
-      <div><dt>Course cmd</dt><dd data-eng="crs">—</dd></div>
+      <div><dt>Course cmd / track</dt><dd data-eng="crs">—</dd></div>
       <div><dt>Bank / cmd</dt><dd data-eng="bank">—</dd></div>
-      <div><dt>Alt / cmd</dt><dd data-eng="alt">—</dd></div>
+      <div><dt>Alt / selected</dt><dd data-eng="alt">—</dd></div>
       <div><dt>V/S</dt><dd data-eng="vs">—</dd></div>
-      <div><dt>TAS</dt><dd data-eng="tas">—</dd></div>
+      <div><dt>IAS / TAS</dt><dd data-eng="tas">—</dd></div>
       <div><dt>AoA</dt><dd data-eng="aoa">—</dd></div>
       <div><dt>FPA / cmd</dt><dd data-eng="gamma">—</dd></div>
-      <div><dt>Throttle</dt><dd data-eng="thr">—</dd></div>
+      <div><dt>Thrust</dt><dd data-eng="thr">—</dd></div>
+      <div><dt>Wind</dt><dd data-eng="wind">—</dd></div>
+      <div><dt>Config</dt><dd data-eng="config">—</dd></div>
+      <div><dt>Fuel · flow</dt><dd data-eng="fuel">—</dd></div>
     </dl>
   </section>
 
@@ -69,11 +73,13 @@ import { url } from '../lib/url';
       <button type="button" data-sim-rate="1" aria-pressed="true">×1</button>
       <button type="button" data-sim-rate="2" aria-pressed="false">×2</button>
       <button type="button" data-sim-rate="4" aria-pressed="false">×4</button>
+      <button type="button" data-sim-rate="8" aria-pressed="false">×8</button>
     </div>
   </section>
 
   <p class="foot">
-    A simplified 3-DOF point-mass model with a generic transport's numbers.
+    A simplified 3-DOF point-mass model with a generic transport's numbers, flying simulated
+    procedures between fictional airports: not for navigation.
     <a href={url('/projects/flight-portfolio/')}>How it works</a>
   </p>
 </aside>

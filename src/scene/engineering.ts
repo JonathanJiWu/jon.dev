@@ -1,8 +1,9 @@
 import { ArrowHelper, Group, Vector3, type WebGLRenderer } from 'three';
 import { S } from '../sim/dynamics';
+import { type FlightData, formatHeading } from '../sim/flightData';
 import type { FlightSimulation, RenderState, Sample } from '../sim/simulation';
 import { clamp } from '../sim/math';
-import { headingLabel, M_TO_FT, M_TO_NM, MS_TO_FPM, MS_TO_KT, toDeg } from '../sim/units';
+import { headingLabel, M_TO_FT, toDeg } from '../sim/units';
 
 const COLORS = { lift: 0x67d4ea, drag: 0xf4b860, thrust: 0x74dca0, weight: 0xc9d3e0 };
 const STRIP = { bank: '#67d4ea', cmd: '#f27ad9', alt: '#f4b860', xtk: '#74dca0' };
@@ -65,13 +66,13 @@ export class EngineeringView {
     this.group.visible = on;
   }
 
-  update(sim: FlightSimulation, pose: RenderState, renderer: WebGLRenderer, stats: FrameStats, now: number): void {
+  update(sim: FlightSimulation, data: FlightData, pose: RenderState, renderer: WebGLRenderer, stats: FrameStats, now: number): void {
     if (!this.enabled) return;
     this.spf += (stats.stepsPerFrame - this.spf) * 0.1;
     this.updateArrows(sim, pose);
     if (now - this.lastPanel > 125) {
       this.lastPanel = now;
-      this.updatePanel(sim, renderer, stats);
+      this.updatePanel(sim, data, renderer, stats);
     }
     if (this.strip && now - this.lastStrip > 100) {
       this.lastStrip = now;
@@ -110,24 +111,29 @@ export class EngineeringView {
     if (el && el.textContent !== text) el.textContent = text;
   }
 
-  private updatePanel(sim: FlightSimulation, renderer: WebGLRenderer, stats: FrameStats): void {
+  private updatePanel(sim: FlightSimulation, d: FlightData, renderer: WebGLRenderer, stats: FrameStats): void {
     const s = sim.state;
     const st = sim.autopilot.status;
     const f = sim.forces;
     const deg = (r: number) => `${toDeg(r).toFixed(1)}°`;
     const ft = (m: number) => `${Math.round(m * M_TO_FT).toLocaleString('en-US')}`;
     const kN = (n: number) => `${(n / 1000).toFixed(1)} kN`;
+    const fma = [d.fma.thrust, d.fma.lateral, d.fma.vertical].filter(Boolean).join(' · ') || '—';
 
-    this.set('mode', sim.mode === 'orbit' ? 'HOLD' : 'DIRECT TO');
-    this.set('target', sim.targetWaypoint.fix);
-    this.set('dtg', `${(sim.distanceToTarget() * M_TO_NM).toFixed(2)} NM`);
+    this.set('phase', d.phase.toUpperCase());
+    this.set('mode', fma);
+    this.set('target', sim.fms.hold ? `HOLD ${sim.fms.hold.fix.ident}` : d.activeIdent);
+    this.set('dtg', `${d.toActive.toFixed(2)} NM`);
     this.set('xtk', `${st.trackError >= 0 ? '+' : ''}${st.trackError.toFixed(0)} m`);
-    this.set('crs', `${headingLabel(st.courseCmd)}°`);
+    this.set('crs', `${headingLabel(st.courseCmd)}° T / ${formatHeading(d.track)}° M`);
     this.set('bank', `${deg(s[S.PHI]!)} / ${deg(st.bankCmd)}`);
-    this.set('alt', `${ft(s[S.Y]!)} / ${ft(sim.altitudeCmd)} ft`);
-    this.set('vs', `${Math.round(s[S.V]! * Math.sin(s[S.GAMMA]!) * MS_TO_FPM)} fpm`);
-    this.set('tas', `${(s[S.V]! * MS_TO_KT).toFixed(0)} kt`);
+    this.set('alt', `${ft(s[S.Y]!)} / ${Math.round(d.selectedAltitude).toLocaleString('en-US')} ft`);
+    this.set('vs', `${Math.round(d.verticalSpeed)} fpm`);
+    this.set('tas', `${d.ias.toFixed(0)} / ${d.tas.toFixed(0)} kt`);
     this.set('aoa', deg(s[S.ALPHA]!));
+    this.set('wind', `${formatHeading(d.windFrom)}° / ${d.windSpeed.toFixed(0)} kt`);
+    this.set('config', `flaps ${Math.round(d.flaps * 100)}% · gear ${d.gear > 0.99 ? 'down' : d.gear < 0.01 ? 'up' : 'moving'}`);
+    this.set('fuel', `${Math.round(d.fuel).toLocaleString('en-US')} kg · ${Math.round(d.fuelFlow).toLocaleString('en-US')} kg/h`);
     this.set('gamma', `${deg(s[S.GAMMA]!)} / ${deg(st.gammaCmd)}`);
     this.set('thr', `${(s[S.THRUST]! * 100).toFixed(0)}%`);
     this.set('lift', kN(f.lift));

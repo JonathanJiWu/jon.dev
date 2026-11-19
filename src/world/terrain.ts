@@ -54,7 +54,7 @@ export const AIRPORT_SITES: readonly AirportSite[] = [
     z: -2000,
     runways: [
       { x: -24_000, z: -2000, heading: T(90), length: 2500, width: 45 },
-      { x: -23_500, z: -1200, heading: T(180), length: 1800, width: 45 },
+      { x: -23_200, z: -300, heading: T(180), length: 1800, width: 45 },
     ],
   },
 ];
