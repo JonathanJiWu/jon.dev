@@ -1,0 +1,489 @@
+---
+/**
+ * Fly mode: the 3D flight fills the screen and these panels sit over it. The welcome
+ * card says who this is and how to get to the portfolio; the flight plan, data strip and
+ * briefing are filled in live by src/scene/hud.ts from the simulation's FlightData.
+ * Hidden in Read mode and without JavaScript (see global.css).
+ */
+import { profile } from '../data/profile';
+---
+
+<div class="fly-hud" data-hud>
+  <section class="welcome panel" data-welcome aria-labelledby="welcome-title">
+    <p class="kicker">Live flight simulation</p>
+    <h1 id="welcome-title">{profile.name}</h1>
+    <p class="role">{profile.title} · {profile.focus}</p>
+    <p class="about">
+      You’re watching a flight model, autopilot and flight management system I wrote for this site, flying a planned
+      instrument flight between two fictional airports. Everything on screen comes from the simulation.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="#top" data-view-set="read">Read the portfolio</a>
+      <button type="button" class="btn" data-welcome-close>Fly along</button>
+    </div>
+    <p class="hint">
+      Drag to look around · scroll or pinch to zoom · <kbd>C</kbd> changes the view · simulated procedures, not for navigation
+    </p>
+  </section>
+
+  <aside class="plan panel" aria-label="Flight plan" data-hud-plan>
+    <details open data-plan-details>
+      <summary>
+        <span class="kicker">Flight plan</span>
+        <span class="route mono" data-hud-route>—</span>
+        <span class="flight mono" data-hud-flight></span>
+      </summary>
+      <p class="sub" data-hud-sub></p>
+      <ol class="legs mono" data-hud-legs></ol>
+      <div class="plan-actions">
+        <button type="button" class="btn-quiet" data-hud-hold aria-pressed="false">Hold at the active fix</button>
+        <button type="button" class="btn-quiet" data-hud-briefing aria-expanded="false" aria-controls="hud-brief">Briefing</button>
+      </div>
+      <div class="brief" id="hud-brief" data-hud-brief hidden></div>
+    </details>
+  </aside>
+
+  <div class="strip panel mono" data-hud-strip>
+    <p class="fma" aria-label="Flight mode annunciator">
+      <span data-hud="fma-thr">—</span><span data-hud="fma-lat">—</span><span data-hud="fma-vert">—</span>
+    </p>
+    <dl class="values">
+      <div><dt>IAS</dt><dd data-hud="ias">—</dd></div>
+      <div><dt>ALT</dt><dd data-hud="alt">—</dd></div>
+      <div><dt>V/S</dt><dd data-hud="vs">—</dd></div>
+      <div><dt>HDG</dt><dd data-hud="hdg">—</dd></div>
+      <div><dt>GS</dt><dd data-hud="gs">—</dd></div>
+      <div><dt>WIND</dt><dd data-hud="wind">—</dd></div>
+    </dl>
+    <p class="status"><span data-hud="phase">—</span> · <span data-hud="eta">—</span></p>
+  </div>
+
+  <div class="tools" role="toolbar" aria-label="View controls">
+    <div class="seg" role="group" aria-label="Camera">
+      <button type="button" data-camera="chase" aria-pressed="true">Chase</button>
+      <button type="button" data-camera="orbit" aria-pressed="false">Orbit</button>
+      <button type="button" data-camera="cockpit" aria-pressed="false">Cockpit</button>
+    </div>
+    <div class="seg instruments" role="group" aria-label="Look at an instrument" data-cockpit-only>
+      <button type="button" data-focus="" aria-pressed="true">Ahead</button>
+      <button type="button" data-focus="pfd-l" aria-pressed="false">PFD</button>
+      <button type="button" data-focus="nd-l" aria-pressed="false">ND</button>
+      <button type="button" data-focus="eicas" aria-pressed="false">Engines</button>
+      <button type="button" data-focus="mfd" aria-pressed="false">MFD</button>
+      <button type="button" data-focus="cdu-l" aria-pressed="false">CDU</button>
+    </div>
+    <button type="button" class="tool" data-hud-pause aria-pressed="false">Pause</button>
+    <button type="button" class="tool" data-action="engineering" aria-pressed="false">Engineering</button>
+  </div>
+</div>
+
+<style>
+  .fly-hud {
+    position: fixed;
+    inset: var(--header-h) 0 0 0;
+    z-index: 20;
+    pointer-events: none;
+    font-size: var(--step--1);
+  }
+
+  .fly-hud > * {
+    pointer-events: auto;
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgb(8 12 22 / 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Welcome card */
+  .welcome {
+    position: absolute;
+    left: var(--gutter);
+    bottom: 1.25rem;
+    width: min(27rem, calc(100% - 2 * var(--gutter)));
+    display: grid;
+    gap: 0.55rem;
+    padding: 1.2rem 1.3rem;
+  }
+
+  .welcome h1 {
+    font-size: var(--step-2);
+    line-height: 1.05;
+  }
+
+  /* Out of the way of the engineering view, which opens on the left in Fly mode. */
+  :global(html.engineering) .welcome {
+    display: none;
+  }
+
+  .welcome .role {
+    color: var(--ink);
+  }
+
+  .welcome .about {
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+
+  .welcome .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+  }
+
+  .welcome .hint {
+    color: var(--ink-3);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  kbd {
+    padding: 0 0.3rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  :global(html.welcome-closed) .welcome {
+    display: none;
+  }
+
+  /* Flight plan */
+  .plan {
+    position: absolute;
+    top: 0.75rem;
+    right: var(--gutter);
+    width: 21rem;
+    max-height: calc(100% - 9.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.8rem 0.85rem;
+  }
+
+  .plan summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .plan summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .plan .route {
+    color: var(--ink);
+    letter-spacing: 0.08em;
+  }
+
+  .plan .flight {
+    margin-left: auto;
+    color: var(--ink-3);
+    font-size: 0.75rem;
+  }
+
+  .plan .sub {
+    margin: 0.35rem 0 0.5rem;
+    color: var(--ink-3);
+    font-size: 0.78rem;
+  }
+
+  .legs {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.78rem;
+  }
+
+  .legs :global(li) {
+    padding: 0.3rem 0.4rem;
+    border-radius: 6px;
+    border-left: 2px solid transparent;
+  }
+
+  .legs :global(li.flown) {
+    opacity: 0.4;
+  }
+
+  .legs :global(li.active) {
+    border-left-color: var(--magenta);
+    background: var(--magenta-dim);
+  }
+
+  .legs :global(.leg-main) {
+    display: grid;
+    grid-template-columns: 4.6rem 1fr 3rem 3.2rem;
+    gap: 0.4rem;
+    align-items: baseline;
+  }
+
+  .legs :global(.ident) {
+    color: var(--ink);
+    letter-spacing: 0.06em;
+  }
+
+  .legs :global(li.active .ident) {
+    color: var(--magenta);
+  }
+
+  .legs :global(.alt) {
+    color: var(--cyan);
+  }
+
+  .legs :global(.dist),
+  .legs :global(.eta) {
+    color: var(--ink-3);
+    text-align: right;
+  }
+
+  .legs :global(.leg-sub) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.15rem;
+    color: var(--ink-3);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+  }
+
+  .legs :global(.leg-sub a) {
+    color: var(--ink-2);
+  }
+
+  .legs :global(.dir) {
+    margin-left: auto;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 5px;
+    background: transparent;
+    color: var(--ink-2);
+    font: 0.68rem/1.4 var(--font-mono);
+    letter-spacing: 0.08em;
+    cursor: pointer;
+  }
+
+  .legs :global(.dir:hover) {
+    border-color: var(--magenta);
+    color: var(--magenta);
+  }
+
+  .plan-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+
+  .plan-actions button[disabled] {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .brief {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem;
+  }
+
+  .brief :global(dl) {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+  }
+
+  .brief :global(dt) {
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .brief :global(dd) {
+    margin: 0;
+    color: var(--ink-2);
+    white-space: pre-line;
+  }
+
+  .brief :global(.brief-note) {
+    margin-top: 0.6rem;
+    color: var(--amber);
+  }
+
+  /* Data strip */
+  .strip {
+    position: absolute;
+    left: 50%;
+    bottom: 1.25rem;
+    transform: translateX(-50%);
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.55rem 0.9rem 0.6rem;
+    min-width: 30rem;
+    font-size: 0.8rem;
+  }
+
+  .fma {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    text-align: center;
+    color: var(--green);
+    letter-spacing: 0.1em;
+  }
+
+  .fma span + span {
+    border-left: 1px solid var(--line);
+  }
+
+  .values {
+    display: grid;
+    grid-template-columns: repeat(6, auto);
+    justify-content: space-between;
+    gap: 0.9rem;
+    margin: 0;
+  }
+
+  .values div {
+    display: grid;
+    gap: 0.05rem;
+    text-align: center;
+  }
+
+  .values dt {
+    color: var(--ink-3);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+  }
+
+  .values dd {
+    margin: 0;
+    color: var(--cyan);
+    font-size: 0.95rem;
+  }
+
+  .status {
+    text-align: center;
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+  }
+
+  /* Toolbar */
+  .tools {
+    position: absolute;
+    right: var(--gutter);
+    bottom: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+    max-width: 30rem;
+  }
+
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgb(8 12 22 / 0.72);
+    overflow: hidden;
+  }
+
+  .seg button,
+  .tool {
+    min-height: 2.25rem;
+    padding: 0.35rem 0.75rem;
+    border: 0;
+    background: transparent;
+    color: var(--ink-2);
+    font: 0.72rem/1 var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .tool {
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgb(8 12 22 / 0.72);
+  }
+
+  .seg button[aria-pressed='true'],
+  .tool[aria-pressed='true'] {
+    background: rgb(103 212 234 / 0.16);
+    color: var(--cyan);
+  }
+
+  .seg button:hover,
+  .tool:hover {
+    color: var(--ink);
+  }
+
+  .instruments {
+    display: none;
+  }
+
+  /* On the flight deck the instruments carry the data: the strip steps aside. */
+  :global(html[data-camera='cockpit']) .strip {
+    display: none;
+  }
+
+  :global(html[data-camera='cockpit']) .instruments {
+    display: inline-flex;
+  }
+
+  /* Narrower screens: the plan collapses, the strip and tools stack at the bottom. */
+  @media (max-width: 1080px) {
+    .plan {
+      width: min(21rem, calc(100% - 2 * var(--gutter)));
+      max-height: 45%;
+    }
+    .plan :global(details:not([open])) {
+      padding-bottom: 0;
+    }
+    .strip {
+      left: var(--gutter);
+      right: var(--gutter);
+      transform: none;
+      min-width: 0;
+      bottom: 4.2rem;
+    }
+    .values {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.35rem 0.6rem;
+    }
+    .tools {
+      left: var(--gutter);
+      right: var(--gutter);
+      bottom: 0.8rem;
+      max-width: none;
+      justify-content: center;
+    }
+    .welcome {
+      bottom: 10.5rem;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .tools .tool[data-action='engineering'] {
+      display: none;
+    }
+    .instruments {
+      order: -1;
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    .welcome .about {
+      display: none;
+    }
+  }
+</style>

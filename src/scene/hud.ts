@@ -23,7 +23,8 @@ const PHASE: Record<FlightData['phase'], string> = {
   hold: 'Holding',
 };
 
-const ft = (m: number) => `${(Math.round(m / FT / 100) * 100).toLocaleString('en-US')}`;
+/** Altitudes as on an FMS: hundreds of feet, no separators (the mono face's comma is wide). */
+const ft = (m: number) => `${Math.round(m / FT / 100) * 100}`;
 
 function altitudeText(l: Leg): string {
   if (l.type === 'TO') return '';
@@ -154,13 +155,20 @@ export class Hud {
     this.set('lat', fms.hold ? 'HOLD' : d.fma.lateral || '—');
     this.set('vert', d.fma.vertical || '—');
     this.set('ias', `${Math.round(d.ias)}`);
-    this.set('alt', `${(Math.round(d.altitude / 10) * 10).toLocaleString('en-US')}`);
-    this.set('vs', `${d.verticalSpeed >= 0 ? '+' : '−'}${Math.abs(Math.round(d.verticalSpeed / 10) * 10).toLocaleString('en-US')}`);
+    this.set('alt', `${Math.round(d.altitude / 10) * 10}`);
+    this.set('vs', `${d.verticalSpeed >= 0 ? '+' : '−'}${Math.abs(Math.round(d.verticalSpeed / 10) * 10)}`);
     this.set('hdg', `${formatHeading(d.heading)}°`);
     this.set('gs', `${Math.round(d.groundSpeed)}`);
     this.set('wind', `${formatHeading(d.windFrom)}°/${Math.round(d.windSpeed)}`);
     this.set('phase', fms.hold ? `Holding at ${fms.hold.fix.ident}` : fms.pendingHold ? `${PHASE[d.phase]} · hold requested` : PHASE[d.phase]);
-    this.set('eta', d.phase === 'parked' ? 'Arrived' : `${formatClock(d.etaDestination)} · ${formatDuration(d.eteDestination)} to go`);
+    this.set(
+      'eta',
+      d.phase === 'parked'
+        ? `Arrived ${plan.destination.ident} · next flight soon`
+        : d.phase === 'landing'
+          ? `Landed ${plan.destination.ident}, runway ${plan.arrival.runway.ident}`
+          : `${formatClock(d.etaDestination)} · ${formatDuration(d.eteDestination)} to go`,
+    );
     if (this.holdBtn) {
       const holding = !!(fms.hold || fms.pendingHold);
       const label = holding ? 'Resume flight plan' : 'Hold at the active fix';

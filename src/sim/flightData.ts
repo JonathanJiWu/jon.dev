@@ -39,6 +39,9 @@ export interface FlightData {
   /** Simulated clock, seconds since midnight. */
   clock: number;
   onGround: boolean;
+  /** Position in the world frame [m] (x east, z south), for maps and distances. */
+  x: number;
+  z: number;
 
   // Air data
   ias: number;
@@ -170,6 +173,8 @@ export function createFlightData(plan: FlightPlan): FlightData {
     fma: { thrust: '', lateral: '', vertical: '' },
     clock: CLOCK_EPOCH,
     onGround: true,
+    x: 0,
+    z: 0,
     ias: 0,
     tas: 0,
     groundSpeed: 0,
@@ -276,6 +281,8 @@ export class FlightDataBus {
     d.fma = fms.fma;
     d.clock = (CLOCK_EPOCH + sim.time) % 86_400;
     d.onGround = sim.onGround;
+    d.x = s[S.X]!;
+    d.z = s[S.Z]!;
     d.plan = plan;
 
     d.ias = iasMs * MS_TO_KT;

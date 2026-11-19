@@ -46,6 +46,8 @@ export interface SceneOptions {
   initialSection: string;
   /** Start paused, and move the camera without animation. */
   reducedMotion?: boolean;
+  /** Start this many seconds into the flight (deterministic; for links and captures). */
+  startAt?: number;
   /** Deterministic still capture for the poster and social image. */
   poster?: boolean;
   onFirstFrame?: () => void;

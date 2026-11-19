@@ -1,17 +1,27 @@
-import { type PerspectiveCamera, Quaternion, Vector3 } from 'three';
+import { Matrix4, type PerspectiveCamera, Quaternion, Vector3 } from 'three';
 import { clamp, damp, lerp, lerpAngle } from '../sim/math';
 import type { RenderState } from '../sim/simulation';
 
 export type CameraMode = 'chase' | 'orbit' | 'cockpit';
 
 /** The captain's eye point in the aircraft's frame (x right, y up, z aft) [m]. */
-export const EYE = new Vector3(-0.55, 0.78, -11.35);
+export const EYE = new Vector3(-0.55, 0.88, -11.7);
 
 const CHASE = { az: -0.35, el: 0.19, dist: 178 };
-const COCKPIT = { yaw: 0, pitch: -0.1, fov: 64 };
+const COCKPIT = { yaw: 0, pitch: -0.22, fov: 62 };
 const TRANSITION = 1.4;
+const FOCUS_FOV = 40;
 
 const smootherstep = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+
+/** A display to lean in to: its centre, facing direction and up, and size (aircraft frame). */
+export interface FocusTarget {
+  center: Vector3;
+  normal: Vector3;
+  up: Vector3;
+  width: number;
+  height: number;
+}
 
 /**
  * The camera, in three modes:
@@ -20,7 +30,7 @@ const smootherstep = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
  *   smoothing (a turn is felt, not bolted on); drag to look around it, it drifts back;
  * - orbit: free, world-fixed; drag to orbit, zoom to any distance;
  * - cockpit: the captain's seat, rigid with the airframe; drag to look around, zoom the
- *   lens, or focus on an instrument.
+ *   lens, or lean in to an instrument (the camera moves to face it squarely).
  *
  * Switching modes blends position, orientation and lens over 1.4 s in the aircraft's own
  * frame, so a transition never lags behind an aircraft doing 100 m/s.
@@ -40,13 +50,17 @@ export class CameraRig {
   private lookYaw = COCKPIT.yaw;
   private lookPitch = COCKPIT.pitch;
   private fov = COCKPIT.fov;
-  private focus: { yaw: number; pitch: number; fov: number } | null = null;
+  private focus: { pos: Vector3; q: Quaternion } | null = null;
   private idle = 0;
   private initialized = false;
 
   // Smoothed chase state (world)
   private readonly pos = new Vector3();
   private readonly look = new Vector3();
+  // Smoothed cockpit state (aircraft frame)
+  private readonly localPos = EYE.clone();
+  private readonly localQ = new Quaternion();
+  private cockpitFov = COCKPIT.fov;
 
   // Transition, in the aircraft's frame
   private t = TRANSITION;
@@ -62,6 +76,7 @@ export class CameraRig {
   private readonly v = new Vector3();
   private readonly lookQ = new Quaternion();
   private readonly ax = new Vector3();
+  private readonly m = new Matrix4();
 
   constructor(private readonly camera: PerspectiveCamera) {}
 
@@ -81,7 +96,15 @@ export class CameraRig {
     this.t = this.reducedMotion ? TRANSITION : 0;
     if (mode === 'orbit') this.orbitYaw = this.yaw + this.az;
     if (mode === 'orbit' || this.mode === 'orbit') this.az = mode === 'orbit' ? 0 : CHASE.az;
-    if (mode === 'cockpit') this.clearFocus();
+    if (mode === 'cockpit') {
+      this.focus = null;
+      this.lookYaw = COCKPIT.yaw;
+      this.lookPitch = COCKPIT.pitch;
+      this.fov = COCKPIT.fov;
+      this.localPos.copy(EYE);
+      this.seatedLook(this.localQ);
+      this.cockpitFov = this.fov;
+    }
     this.mode = mode;
     this.initialized = false;
     this.idle = 0;
@@ -93,7 +116,7 @@ export class CameraRig {
     if (this.mode === 'cockpit') {
       this.focus = null;
       this.lookYaw = clamp(this.lookYaw + dx * 0.004, -2.6, 2.6);
-      this.lookPitch = clamp(this.lookPitch + dy * 0.003, -1.0, 0.85);
+      this.lookPitch = clamp(this.lookPitch + dy * 0.003, -1.1, 0.85);
     } else {
       this.az -= dx * 0.005;
       this.el = clamp(this.el + dy * 0.004, -0.12, 1.35);
@@ -119,10 +142,14 @@ export class CameraRig {
     this.clearFocus();
   }
 
-  /** Cockpit: turn to look at a point (aircraft frame) and narrow the lens. */
-  focusOn(local: Vector3, fov: number): void {
-    const d = this.v.copy(local).sub(EYE);
-    this.focus = { yaw: Math.atan2(-d.x, -d.z), pitch: Math.atan2(d.y, Math.hypot(d.x, d.z)), fov };
+  /** Cockpit: lean in to face a display squarely, filling most of the view. */
+  focusOn(f: FocusTarget): void {
+    const half = Math.tan(((FOCUS_FOV / 2) * Math.PI) / 180);
+    const aspect = this.camera.aspect || 1;
+    const dist = Math.max(f.height / 2 / half, f.width / 2 / (half * aspect)) * 1.12;
+    const pos = f.center.clone().addScaledVector(f.normal, dist);
+    this.m.lookAt(pos, f.center, f.up);
+    this.focus = { pos, q: new Quaternion().setFromRotationMatrix(this.m) };
   }
 
   clearFocus(): void {
@@ -134,6 +161,12 @@ export class CameraRig {
 
   get focused(): boolean {
     return this.focus !== null;
+  }
+
+  private seatedLook(out: Quaternion): Quaternion {
+    out.setFromAxisAngle(this.ax.set(0, 1, 0), this.lookYaw);
+    this.q.setFromAxisAngle(this.ax.set(1, 0, 0), this.lookPitch);
+    return out.multiply(this.q);
   }
 
   update(pose: RenderState, aircraftPos: Vector3, body: Quaternion, dt: number, groundAt: (x: number, z: number) => number, still = false): void {
@@ -149,18 +182,16 @@ export class CameraRig {
 
     let fov = this.baseFov;
     if (this.mode === 'cockpit') {
-      const f = this.focus;
-      this.lookYaw = damp(this.lookYaw, f ? f.yaw : this.lookYaw, 5, dt);
-      this.lookPitch = damp(this.lookPitch, f ? f.pitch : this.lookPitch, 5, dt);
-      const lensTarget = f ? f.fov : this.fov;
-      fov = this.t >= TRANSITION ? damp(cam.fov, lensTarget, 6, dt) : lensTarget;
-      this.lookQ.setFromAxisAngle(this.ax.set(0, 1, 0), this.lookYaw);
-      this.q.setFromAxisAngle(this.ax.set(1, 0, 0), this.lookPitch);
-      this.lookQ.multiply(this.q);
-      this.desired.copy(EYE).applyQuaternion(body).add(aircraftPos);
-      this.q.copy(body).multiply(this.lookQ);
-      cam.position.copy(this.desired);
-      cam.quaternion.copy(this.q);
+      // Seated look, or leaning in to an instrument: damped in the aircraft's frame.
+      const targetPos = this.focus ? this.focus.pos : EYE;
+      const targetQ = this.focus ? this.focus.q : this.seatedLook(this.lookQ);
+      const k = this.reducedMotion ? 1 : 1 - Math.exp(-6 * dt);
+      this.localPos.lerp(targetPos, k);
+      this.localQ.slerp(targetQ, k);
+      this.cockpitFov = lerp(this.cockpitFov, this.focus ? FOCUS_FOV : this.fov, k);
+      fov = this.cockpitFov;
+      cam.position.copy(this.localPos).applyQuaternion(body).add(aircraftPos);
+      cam.quaternion.copy(body).multiply(this.localQ);
     } else {
       const heading = this.mode === 'orbit' ? this.orbitYaw : this.yaw;
       const a = heading + this.az;

@@ -66,6 +66,28 @@ const person = {
     <script is:inline>
       document.documentElement.classList.add('js');
     </script>
+    {
+      home && (
+        <script is:inline>
+          // Fly or Read, decided before first paint so the page doesn't flash. New
+          // sessions fly; a choice is kept for the session; a link to a section reads.
+          (function () {
+            var d = document.documentElement;
+            var q = new URLSearchParams(location.search);
+            var view = 'fly';
+            try {
+              var v = sessionStorage.getItem('jw:view');
+              if (v === 'read' || v === 'fly') view = v;
+              if (sessionStorage.getItem('jw:welcome') === 'closed') d.classList.add('welcome-closed');
+            } catch (e) {}
+            if (location.hash.length > 1) view = 'read';
+            if (q.get('view') === 'read' || q.get('view') === 'fly') view = q.get('view');
+            if (q.has('poster') || (navigator.connection && navigator.connection.saveData)) view = 'read';
+            d.dataset.view = view;
+          })();
+        </script>
+      )
+    }
     <script type="application/ld+json" set:html={JSON.stringify(person)} />
     <slot name="head" />
   </head>

@@ -12,11 +12,12 @@ import { intro, profile } from '../data/profile';
       <a class="btn primary" href="#work">Selected work</a>
       <a class="btn" href="#experience">Experience</a>
       <a class="btn" href={profile.links.linkedin} rel="me">LinkedIn <span aria-hidden="true">↗</span></a>
+      <button type="button" class="btn" data-view-set="fly" data-scene-only>Fly the route</button>
     </div>
     <p class="scene-note" data-scene-note data-js-only aria-live="polite"></p>
   </div>
   <a class="scroll-cue" href="#about">
-    <span>Scroll to fly the route</span>
+    <span>Scroll: the aircraft holds over each section</span>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m0 0-6-6m6 6 6-6" /></svg>
   </a>
 </section>

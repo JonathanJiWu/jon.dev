@@ -18,12 +18,13 @@ export interface Station {
 }
 
 export const STATIONS: readonly Station[] = [
-  { z: -15.3, w: 0.02, h: 0.02, cy: -0.72, n: 2 },
-  { z: -15.12, w: 0.95, h: 0.86, cy: -0.72, n: 2 },
-  { z: -14.6, w: 2.05, h: 1.85, cy: -0.66, n: 2.1 },
-  { z: -13.7, w: 3.05, h: 2.6, cy: -0.6, n: 2.2 },
-  { z: -12.8, w: 3.7, h: 3.42, cy: -0.36, n: 2.3 },
-  { z: -11.9, w: 4.1, h: 4.08, cy: -0.1, n: 2.4 },
+  // The nose drops away ahead of the windshield, for a view of the ground over it.
+  { z: -15.3, w: 0.02, h: 0.02, cy: -0.86, n: 2 },
+  { z: -15.12, w: 0.95, h: 0.86, cy: -0.86, n: 2 },
+  { z: -14.6, w: 2.05, h: 1.8, cy: -0.84, n: 2.1 },
+  { z: -13.7, w: 3.05, h: 2.55, cy: -0.74, n: 2.2 },
+  { z: -12.8, w: 3.7, h: 3.42, cy: -0.42, n: 2.3 },
+  { z: -11.9, w: 4.1, h: 4.08, cy: -0.12, n: 2.4 },
   { z: -10.8, w: 4.38, h: 4.45, cy: 0, n: 2.5 },
   { z: -9.2, w: 4.5, h: 4.6, cy: 0, n: 2.6 },
   { z: 4.8, w: 4.5, h: 4.6, cy: 0, n: 2.6 },
@@ -74,18 +75,23 @@ export interface WindowShape {
   radius: number;
 }
 
-const PANES = [0.62, 0.81, 1.0, 1.19, 1.38];
+const PANES = [0.62, 0.79, 1.21, 1.38];
 
+/**
+ * The flight deck's windows. The windshield reaches far enough forward and down the nose
+ * that the captain, seated at the eye point, sees about 15° below the horizon over the
+ * glareshield, as in a real transport.
+ */
 export const WINDOWS: readonly WindowShape[] = [
-  // Windshield: four panes across the top of the nose.
-  ...PANES.slice(0, -1).map((t0, i) => ({ z0: -13.05, z1: -12.2, t0: t0 + 0.008, t1: PANES[i + 1]! - 0.008, radius: 4 })),
+  // Windshield: a wide centre pane and a side pane each side, with thin pillars between.
+  ...PANES.slice(0, -1).map((t0, i) => ({ z0: -14.08, z1: -12.46, t0: t0 + 0.004, t1: PANES[i + 1]! - 0.004, radius: 4 })),
   // Side windows, two each side, then the eyebrow windows above the windshield.
-  { z0: -12.15, z1: -11.3, t0: 0.55, t1: 0.7, radius: 5 },
-  { z0: -11.2, z1: -10.45, t0: 0.56, t1: 0.7, radius: 5 },
-  { z0: -12.15, z1: -11.3, t0: 1.3, t1: 1.45, radius: 5 },
-  { z0: -11.2, z1: -10.45, t0: 1.3, t1: 1.44, radius: 5 },
-  { z0: -12.12, z1: -11.72, t0: 0.84, t1: 0.96, radius: 3 },
-  { z0: -12.12, z1: -11.72, t0: 1.04, t1: 1.16, radius: 3 },
+  { z0: -12.4, z1: -11.5, t0: 0.53, t1: 0.67, radius: 5 },
+  { z0: -11.42, z1: -10.62, t0: 0.54, t1: 0.67, radius: 5 },
+  { z0: -12.4, z1: -11.5, t0: 1.33, t1: 1.47, radius: 5 },
+  { z0: -11.42, z1: -10.62, t0: 1.33, t1: 1.46, radius: 5 },
+  { z0: -12.4, z1: -12.02, t0: 0.84, t1: 0.97, radius: 3 },
+  { z0: -12.4, z1: -12.02, t0: 1.03, t1: 1.16, radius: 3 },
 ];
 
 /** Small round cabin windows, a few each side. */

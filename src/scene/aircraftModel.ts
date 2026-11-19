@@ -115,7 +115,7 @@ function liveryTextures(): { map: Texture; rough: Texture } {
   // Anti-glare panel ahead of the windshield.
   g.fillStyle = '#20252d';
   g.beginPath();
-  g.ellipse(X(-13.8), Y(T), X(-13.05) - X(-13.8), Y(0.72 * T) - Y(T), 0, 0, Math.PI * 2);
+  g.ellipse(X(-14.55), Y(T), X(-14.08) - X(-14.55), Y(0.7 * T) - Y(T), 0, 0, Math.PI * 2);
   g.fill();
 
   // Windows: dark, glossy glass (low roughness), from the shared layout.

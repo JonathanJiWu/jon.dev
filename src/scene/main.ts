@@ -58,7 +58,7 @@ export async function startScene(opts: SceneOptions): Promise<SceneController> {
   const camera = new PerspectiveCamera(38, 1, 3, 125_000);
 
   // The poster is a fixed moment of the climb-out; a visit starts just after lift-off.
-  const sim = new FlightSimulation({ world: WORLD, warmup: opts.poster ? 150 : 36 });
+  const sim = new FlightSimulation({ world: WORLD, warmup: opts.startAt ?? (opts.poster ? 150 : 36) });
   const bus = new FlightDataBus(sim);
   const pose = createRenderState();
   const body = new Quaternion();
@@ -192,7 +192,7 @@ export async function startScene(opts: SceneOptions): Promise<SceneController> {
       const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       const hit = cockpit.click(x, y, sim, focused);
       if (hit?.action === 'focus') {
-        rig.focusOn(hit.point, hit.fov);
+        rig.focusOn(hit.target);
         focused = hit.id;
       } else if (hit?.action === 'unfocus') {
         rig.clearFocus();
@@ -282,6 +282,8 @@ export async function startScene(opts: SceneOptions): Promise<SceneController> {
     fill.position.copy(camera.position);
     sky.mesh.position.copy(camera.position);
     routeViz.update(sim);
+    // From the flight deck the route isn't painted on the sky.
+    routeViz.group.visible = inside < 0.5;
     labels.setActive(sim.fms.hold ? sim.fms.hold.fix.ident : data.activeIdent);
     labels.update(camera, width, height);
     ground.material.uniforms.uTime!.value = time;
@@ -354,7 +356,7 @@ export async function startScene(opts: SceneOptions): Promise<SceneController> {
       if (rig.mode !== 'cockpit') rig.setMode('cockpit', aircraftPos, body);
       const s = id ? cockpit.surface(id) : null;
       if (s && id) {
-        rig.focusOn(s.point, s.fov);
+        rig.focusOn(s);
         focused = id;
       } else {
         rig.clearFocus();

@@ -15,7 +15,7 @@ import { ROUTE } from '../world/route';
     {
       ROUTE.map((stop) => (
         <li>
-          <a href={`#${stop.section}`} data-leg={stop.id}>
+          <a href={`#${stop.section}`} data-leg={stop.id} data-x={Math.round(stop.x)} data-z={Math.round(stop.z)}>
             <span class="fix">{stop.fix}</span>
             <span class="label">{stop.label}</span>
             <span class="dist" data-dist={stop.id} aria-hidden="true" />

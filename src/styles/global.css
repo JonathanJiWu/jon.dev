@@ -302,6 +302,49 @@ html.poster-mode .skip-link {
   display: none !important;
 }
 
+/* ---------- Fly and Read ----------
+ * Fly: the 3D flight fills the screen with its panels; the page waits behind a
+ * "Read the portfolio" button. Read: the page, with the flight as its backdrop.
+ * Without JavaScript there is only Read. */
+
+html:not(.js) .fly-hud,
+html:not([data-view='fly']) .fly-hud {
+  display: none;
+}
+
+html.js[data-view='fly'] body {
+  overflow: hidden;
+}
+
+html.js[data-view='fly'] main,
+html.js[data-view='fly'] .site-footer,
+html.js[data-view='fly'] .fms {
+  display: none;
+}
+
+html.js[data-view='fly'] .scene canvas {
+  touch-action: none;
+  cursor: grab;
+}
+
+html.js[data-view='fly'] .scene canvas:active {
+  cursor: grabbing;
+}
+
+html.js[data-view='fly'] .scene .scrim {
+  background: linear-gradient(to top, rgb(5 8 15 / 0.55) 0%, rgb(5 8 15 / 0) 30%);
+}
+
+html[data-camera='cockpit'] .scene .labels {
+  opacity: 0 !important;
+}
+
+html.js[data-view='fly'] .eng-panel {
+  left: var(--gutter);
+  right: auto;
+  max-height: calc(100vh - var(--header-h) - 6rem);
+}
+
 /* Keep page content above the fixed scene. */
 main,
 .site-footer {

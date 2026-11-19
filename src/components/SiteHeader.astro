@@ -35,11 +35,15 @@ const nav = [
   <div class="header-tools">
     {
       home && (
-        <button type="button" class="scene-toggle" data-scene-toggle aria-pressed="false" hidden>
-          <span class="dot" aria-hidden="true" />
-          <span class="label">3D</span>
-          <span class="sr-only">live background</span>
-        </button>
+        <div class="view-switch" role="group" aria-label="View" data-view-switch hidden>
+          <button type="button" data-view-set="fly" aria-pressed="false">
+            <span class="dot" aria-hidden="true" />
+            Fly
+          </button>
+          <button type="button" data-view-set="read" aria-pressed="false">
+            Read
+          </button>
+        </div>
       )
     }
     <details class="nav-narrow">
@@ -132,36 +136,52 @@ const nav = [
     gap: 0.5rem;
   }
 
-  .scene-toggle {
+  .view-switch {
+    display: inline-flex;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgb(10 16 29 / 0.6);
+    overflow: hidden;
+  }
+
+  .view-switch[hidden] {
+    display: none;
+  }
+
+  .view-switch button {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
     min-height: 2.25rem;
-    padding: 0.3rem 0.75rem;
-    border: 1px solid var(--line-strong);
-    border-radius: 999px;
-    background: rgb(10 16 29 / 0.6);
+    padding: 0.3rem 0.8rem;
+    border: 0;
+    background: transparent;
     color: var(--ink-2);
     font: 0.75rem/1 var(--font-mono);
     letter-spacing: 0.12em;
+    text-transform: uppercase;
     cursor: pointer;
   }
 
-  .scene-toggle .dot {
+  .view-switch button[aria-pressed='true'] {
+    background: rgb(242 122 217 / 0.16);
+    color: var(--ink);
+  }
+
+  .view-switch button:hover {
+    color: var(--ink);
+  }
+
+  .view-switch .dot {
     width: 0.5rem;
     height: 0.5rem;
     border-radius: 50%;
     background: var(--ink-3);
   }
 
-  .scene-toggle[aria-pressed='true'] .dot {
+  :global(html[data-scene='running']) .view-switch .dot {
     background: var(--green);
     box-shadow: 0 0 0.5rem var(--green);
-  }
-
-  .scene-toggle:hover {
-    border-color: var(--magenta);
-    color: var(--ink);
   }
 
   .nav-narrow {

@@ -364,7 +364,9 @@ export class Pfd extends Display {
     g.fillRect(x0 - 4, cy - 17, 84, 34);
     g.strokeRect(x0 - 4, cy - 17, 84, 34);
     this.text(String(Math.round(Math.max(d.ias, 30))).padStart(3, ' '), x0 + 38, cy + 1, C.white, 26, 'center', 700);
-    this.text(String(Math.round(d.selectedSpeed)), (x0 + x1) / 2, 76, C.magenta, 22, 'center');
+    g.fillStyle = '#000';
+    g.fillRect(x0 - 4, 56, 84, 32);
+    this.text(String(Math.round(d.selectedSpeed)), (x0 + x1) / 2, 72, C.magenta, 22, 'center');
     this.text(`GS ${Math.round(d.groundSpeed)}`, (x0 + x1) / 2 + 6, 374, C.white, 16, 'center');
   }
 
@@ -409,7 +411,9 @@ export class Pfd extends Display {
     g.fillRect(x0 - 6, cy - 17, 86, 34);
     g.strokeRect(x0 - 6, cy - 17, 86, 34);
     this.text(String(Math.round(d.altitude / 10) * 10), x0 + 37, cy + 1, C.white, 22, 'center', 700);
-    this.text(String(Math.round(d.selectedAltitude / 100) * 100), (x0 + x1) / 2, 76, C.magenta, 22, 'center');
+    g.fillStyle = '#000';
+    g.fillRect(x0 - 6, 56, 86, 32);
+    this.text(String(Math.round(d.selectedAltitude / 100) * 100), (x0 + x1) / 2, 72, C.magenta, 22, 'center');
     this.text(`${d.altimeter.toFixed(2)} IN`, (x0 + x1) / 2, 374, C.green, 15, 'center');
   }
 
@@ -753,10 +757,13 @@ export class Eicas extends Display {
     g.moveTo(x, y);
     g.lineTo(x + Math.cos(at(value)) * (r - 4), y + Math.sin(at(value)) * (r - 4));
     g.stroke();
+    // Digital readout, boxed over the dial's lower right.
+    g.fillStyle = '#000';
+    g.fillRect(x + 2, y + 4, r + 4, 26);
     g.strokeStyle = C.dim;
     g.lineWidth = 2;
-    g.strokeRect(x - 4, y - 14, r + 6, 26);
-    this.text(label, x + r / 2 - 1, y, value > redline ? C.red : C.white, 18, 'center', 700);
+    g.strokeRect(x + 2, y + 4, r + 4, 26);
+    this.text(label, x + 4 + r / 2, y + 17, value > redline ? C.red : C.white, 18, 'center', 700);
   }
 
   protected draw(d: FlightData): void {
@@ -764,12 +771,13 @@ export class Eicas extends Display {
     this.clear();
     const xs = [66, 192, 320, 446];
     this.text('TQ %', 256, 18, C.cyan, 15, 'center');
-    d.engines.forEach((e, i) => this.dial(xs[i]!, 74, 44, e.torque, 110, 100, e.torque.toFixed(0)));
+    d.engines.forEach((e, i) => this.dial(xs[i]!, 70, 44, e.torque, 110, 105, e.torque.toFixed(0)));
     this.text('TGT °C', 256, 140, C.cyan, 15, 'center');
-    d.engines.forEach((e, i) => this.dial(xs[i]!, 190, 34, e.tgt, 1000, 850, String(Math.round(e.tgt))));
+    d.engines.forEach((e, i) => this.dial(xs[i]!, 182, 34, e.tgt, 1000, 850, String(Math.round(e.tgt))));
+    const cols = [118, 230, 342, 454];
     const row = (label: string, y: number, values: string[], color = C.white) => {
-      this.text(label, 8, y, C.cyan, 14);
-      values.forEach((v, i) => this.text(v, xs[i]! + 8, y, color, 18, 'center'));
+      this.text(label, 8, y, C.cyan, 13);
+      values.forEach((v, i) => this.text(v, cols[i]!, y, color, 18, 'center'));
     };
     row('NH %', 252, d.engines.map((e) => e.nh.toFixed(1)));
     row('NP %', 280, d.engines.map((e) => e.np.toFixed(0)));
@@ -785,8 +793,8 @@ export class Eicas extends Display {
 
     // Fuel
     this.text('FUEL KG', 12, 374, C.cyan, 14);
-    this.text(Math.round(d.fuel).toLocaleString('en-US'), 12, 400, C.white, 24, 'left', 700);
-    this.text(`FF ${Math.round(d.fuelFlow).toLocaleString('en-US')}`, 12, 426, C.white, 15);
+    this.text(String(Math.round(d.fuel)), 12, 400, C.white, 24, 'left', 700);
+    this.text(`FF ${Math.round(d.fuelFlow)}`, 12, 426, C.white, 15);
 
     // Flaps: a vertical scale with the command (magenta) and position (white).
     this.text('FLAPS', 214, 374, C.cyan, 14, 'center');
@@ -900,7 +908,7 @@ export class Mfd extends Display {
   private fuel(d: FlightData): void {
     const g = this.g;
     this.text('FUEL', 256, 24, C.white, 18, 'center', 700);
-    this.text(Math.round(d.fuel).toLocaleString('en-US'), 256, 76, C.white, 40, 'center', 700);
+    this.text(String(Math.round(d.fuel)), 256, 76, C.white, 40, 'center', 700);
     this.text('KG ON BOARD', 256, 108, C.cyan, 14, 'center');
     const cap = 20_000;
     g.strokeStyle = C.white;
@@ -914,11 +922,11 @@ export class Mfd extends Display {
     this.table(
       [
         ['USED', `${Math.round(d.fuelUsed)} KG`],
-        ['FLOW', `${Math.round(d.fuelFlow).toLocaleString('en-US')} KG/H`],
+        ['FLOW', `${Math.round(d.fuelFlow)} KG/H`],
         ['ENDURANCE', formatDuration(d.endurance)],
         ['PLANNED TRIP', `${Math.round(d.plan.tripFuel)} KG`],
-        ['AT DEST (PRED)', `${Math.round(d.fuelAtDestination).toLocaleString('en-US')} KG`, ok ? C.green : C.amber],
-        ['RESERVE 45 MIN', `${Math.round(d.reserveFuel).toLocaleString('en-US')} KG`],
+        ['AT DEST (PRED)', `${Math.round(d.fuelAtDestination)} KG`, ok ? C.green : C.amber],
+        ['RESERVE 45 MIN', `${Math.round(d.reserveFuel)} KG`],
         ['GROSS WEIGHT', `${(d.grossWeight / 1000).toFixed(1)} T`],
       ],
       20,
@@ -1073,9 +1081,10 @@ export class Mfd extends Display {
     g.fill();
     g.strokeStyle = C.white;
     g.lineWidth = 2;
+    // Where the present flight path leads, over the next 2 NM.
     g.beginPath();
     g.moveTo(x0 + 14, ay);
-    g.lineTo(X(6 * NM), Y(sim.state[1]! + Math.tan(d.fpa * DEG) * 6 * NM));
+    g.lineTo(X(2 * NM), Math.max(y1, Math.min(y0, Y(sim.state[1]! + Math.tan(d.fpa * DEG) * 2 * NM))));
     g.stroke();
     this.text('NM AHEAD ALONG THE ROUTE', 256, 446, C.dim, 12, 'center');
   }

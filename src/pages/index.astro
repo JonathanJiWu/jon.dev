@@ -7,6 +7,7 @@ import ProjectCard from '../components/ProjectCard.astro';
 import ProjectMini from '../components/ProjectMini.astro';
 import ExperienceLog from '../components/ExperienceLog.astro';
 import FlightPlan from '../components/FlightPlan.astro';
+import FlyHud from '../components/FlyHud.astro';
 import SceneMount from '../components/SceneMount.astro';
 import EngineeringPanel from '../components/EngineeringPanel.astro';
 import { about, beyond, facts, profile, skills } from '../data/profile';
@@ -18,6 +19,8 @@ const more = projects.filter((p) => !p.data.featured);
 
 <Base home>
   <SceneMount slot="background" />
+  <FlyHud slot="background" />
+  <EngineeringPanel slot="background" />
 
   <Hero />
 
@@ -116,7 +119,6 @@ const more = projects.filter((p) => !p.data.featured);
   </Leg>
 
   <FlightPlan />
-  <EngineeringPanel />
 </Base>
 
 <style>
