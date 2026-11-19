@@ -1,132 +1,207 @@
 import { describe, expect, it } from 'vitest';
-import { ISA, density } from './atmosphere';
-import { stallAlpha, TRANSPORT } from './aircraft';
-import { DEFAULT_GAINS } from './autopilot';
+import { density, ISA } from './atmosphere';
+import { stallAlpha, stallSpeed } from './aircraft';
 import { S } from './dynamics';
-import { FlightSimulation, type Waypoint } from './simulation';
-import { smoothstep } from './math';
-import { ROUTE } from '../world/route';
-import { terrainHeight } from '../world/terrain';
+import type { Phase } from './fms';
+import { DEG } from './math';
+import type { Wind } from './navdata';
+import { FT, KT, NM } from './planner';
+import { FlightSimulation } from './simulation';
+import { WORLD } from '../world/navdata';
 
-const newSim = () => new FlightSimulation({ waypoints: ROUTE, start: 'home', terrainHeight });
+const FPM = FT / 60;
+const WINDS: [string, Wind][] = [
+  ['calm', { from: 0, speed: 0 }],
+  ['270/20', { from: 270 * DEG, speed: 20 * KT }],
+  ['090/12', { from: 90 * DEG, speed: 12 * KT }],
+  ['180/15', { from: 180 * DEG, speed: 15 * KT }],
+  ['225/25', { from: 225 * DEG, speed: 25 * KT }],
+];
 
-/** Track the flight envelope while running. */
-function envelope(sim: FlightSimulation) {
-  const e = { maxBank: 0, maxAlpha: -Infinity, minSpeedOverStall: Infinity, minHeightAgl: Infinity };
-  return {
-    e,
-    sample() {
-      const s = sim.state;
-      e.maxBank = Math.max(e.maxBank, Math.abs(s[S.PHI]!));
-      e.maxAlpha = Math.max(e.maxAlpha, s[S.ALPHA]!);
-      const rho = density(s[S.Y]!);
-      const vStall = Math.sqrt((2 * TRANSPORT.mass * ISA.g0) / (rho * TRANSPORT.wingArea * TRANSPORT.clMax));
-      e.minSpeedOverStall = Math.min(e.minSpeedOverStall, s[S.V]! / vStall);
-      e.minHeightAgl = Math.min(e.minHeightAgl, s[S.Y]! - terrainHeight(s[S.X]!, s[S.Z]!));
-    },
-  };
+interface FlightLog {
+  phases: Phase[];
+  maxBank: number;
+  /** Highest α as a fraction of the stall α for the flap setting at the time. */
+  maxAlphaFraction: number;
+  /** Lowest IAS as a multiple of the 1-g stall speed, while airborne above 50 ft. */
+  minStallMargin: number;
+  /** Lowest wheel height in cruise, descent and holds [m]. */
+  minClearance: number;
+  /** Time and fuel from brake release to touchdown. */
+  flown: number;
+  fuelUsed: number;
 }
 
-function runFor(sim: FlightSimulation, seconds: number, each?: () => void): void {
-  const n = Math.round(seconds / sim.dt);
-  for (let i = 0; i < n; i++) {
-    sim.step();
-    each?.();
-  }
-}
-
-function runUntil(sim: FlightSimulation, done: () => boolean, maxSeconds: number, each?: () => void): number {
+/** Fly until the current flight has landed and stopped (or a time limit), logging the envelope. */
+function flyOneFlight(sim: FlightSimulation, maxSeconds = 2400): FlightLog {
+  const log: FlightLog = { phases: [sim.phase], maxBank: 0, maxAlphaFraction: 0, minStallMargin: Infinity, minClearance: Infinity, flown: 0, fuelUsed: 0 };
   const t0 = sim.time;
-  while (!done() && sim.time - t0 < maxSeconds) {
+  const fuel0 = sim.systems.fuel;
+  const flight = sim.flight;
+  while (sim.phase !== 'parked' && sim.flight === flight && sim.time - t0 < maxSeconds) {
     sim.step();
-    each?.();
-  }
-  return sim.time - t0;
-}
-
-function expectWithinEnvelope(e: ReturnType<typeof envelope>['e']): void {
-  expect(e.maxBank).toBeLessThanOrEqual(DEFAULT_GAINS.bankLimit + 0.01);
-  expect(e.maxAlpha).toBeLessThan(stallAlpha(TRANSPORT));
-  expect(e.minSpeedOverStall).toBeGreaterThan(1.2);
-  expect(e.minHeightAgl).toBeGreaterThan(200);
-}
-
-describe('flight simulation + autopilot', () => {
-  it('starts trimmed in the hold and stays on it', () => {
-    const sim = newSim();
-    const env = envelope(sim);
-    runFor(sim, 120, env.sample);
-    const st = sim.autopilot.status;
-    expect(sim.mode).toBe('orbit');
-    expect(Math.abs(st.trackError)).toBeLessThan(15);
-    expect(Math.abs(st.altitudeError)).toBeLessThan(3);
-    expect(Math.abs(st.speedError)).toBeLessThan(0.3);
-    expectWithinEnvelope(env.e);
-  });
-
-  it('flies direct to every waypoint in turn, captures and holds', () => {
-    const sim = newSim();
-    const env = envelope(sim);
-    for (const stop of ROUTE.slice(1)) {
-      expect(sim.setTarget(stop.id)).toBe(true);
-      const took = runUntil(sim, () => sim.mode === 'orbit', 300, env.sample);
-      expect(took).toBeLessThan(300);
-      // Settle on the hold, then check it is tracked accurately.
-      runFor(sim, 90, env.sample);
-      expect(Math.abs(sim.autopilot.status.trackError)).toBeLessThan(25);
-      expect(Math.abs(sim.state[S.Y]! - sim.altitudeCmd)).toBeLessThan(5);
+    if (sim.phase === 'landing' && !log.flown) {
+      log.flown = sim.time - t0;
+      log.fuelUsed = fuel0 - sim.systems.fuel;
     }
-    expectWithinEnvelope(env.e);
+    const s = sim.state;
+    if (log.phases[log.phases.length - 1] !== sim.phase) log.phases.push(sim.phase);
+    log.maxBank = Math.max(log.maxBank, Math.abs(s[S.PHI]!));
+    if (!sim.onGround) {
+      log.maxAlphaFraction = Math.max(log.maxAlphaFraction, s[S.ALPHA]! / stallAlpha(sim.params, sim.systems.flaps));
+      if (sim.fms.wheelHeight > 50 * FT) {
+        const ias = s[S.V]! * Math.sqrt(density(s[S.Y]!) / ISA.rho0);
+        log.minStallMargin = Math.min(log.minStallMargin, ias / stallSpeed(sim.params, sim.systems.mass(), sim.systems.flaps));
+      }
+    }
+    if (sim.phase === 'cruise' || sim.phase === 'descent' || sim.phase === 'hold') log.minClearance = Math.min(log.minClearance, sim.fms.wheelHeight);
+  }
+  return log;
+}
+
+describe.each(WINDS)('a full flight each way, wind %s', (_, wind) => {
+  const sim = new FlightSimulation({ world: WORLD, weather: () => wind });
+  const logs = [0, 1].map(() => {
+    const plan = sim.plan;
+    const log = flyOneFlight(sim);
+    const td = sim.fms.touchdown;
+    const result = { plan, log, td, incidents: sim.incidents, phase: sim.phase };
+    // On to the next flight: let the parked timer run out.
+    while (sim.flight === plan.id && sim.time < 3 * 3600) sim.step();
+    return result;
   });
 
-  it('ignores a target it is already flying to', () => {
-    const sim = newSim();
-    expect(sim.setTarget('home')).toBe(false);
-    expect(sim.setTarget('nowhere')).toBe(false);
+  it.each([0, 1])('flight %i flies every phase in order and lands without incident', (i) => {
+    const r = logs[i]!;
+    expect(r.incidents).toBe(0);
+    expect(r.phase).toBe('parked');
+    expect(r.log.phases).toEqual(['takeoff', 'climb', 'cruise', 'descent', 'approach', 'final', 'landing', 'parked']);
   });
 
+  it.each([0, 1])('flight %i touches down in the touchdown zone, gently, near Vref', (i) => {
+    const { td, plan } = logs[i]!;
+    expect(td).not.toBeNull();
+    // Touchdown zone: the first 3,000 ft; the aiming point is ~1,000 ft in.
+    expect(td!.distance).toBeGreaterThan(150);
+    expect(td!.distance).toBeLessThan(900);
+    expect(td!.sinkRate / FPM).toBeLessThan(360);
+    expect(td!.sinkRate).toBeGreaterThan(0);
+    expect(Math.abs(td!.speed - plan.speeds.vref) / KT).toBeLessThan(10);
+  });
+
+  it.each([0, 1])('flight %i stays inside the envelope and clear of the terrain', (i) => {
+    const { log, plan } = logs[i]!;
+    expect(log.maxBank).toBeLessThanOrEqual(25 * DEG + 0.005);
+    expect(log.maxAlphaFraction).toBeLessThan(0.9);
+    expect(log.minStallMargin).toBeGreaterThan(1.2);
+    // En route and in the descent: at least 1,000 ft above the terrain, less a small margin.
+    expect(log.minClearance).toBeGreaterThan(900 * FT);
+    expect(plan.warnings).toEqual([]);
+  });
+
+  it.each([0, 1])('flight %i takes about as long, and burns about as much, as planned', (i) => {
+    const { log, plan } = logs[i]!;
+    expect(Math.abs(log.flown - plan.ete) / plan.ete).toBeLessThan(0.12);
+    expect(Math.abs(log.fuelUsed - plan.tripFuel) / plan.tripFuel).toBeLessThan(0.12);
+  });
+
+  it('alternates between the two airports', () => {
+    expect(logs[0]!.plan.origin.ident).toBe(logs[1]!.plan.destination.ident);
+    expect(logs[0]!.plan.destination.ident).toBe(logs[1]!.plan.origin.ident);
+  });
+});
+
+function runFor(sim: FlightSimulation, seconds: number): void {
+  const n = Math.round(seconds / sim.dt);
+  for (let i = 0; i < n; i++) sim.step();
+}
+
+function runUntil(sim: FlightSimulation, done: () => boolean, maxSeconds: number): void {
+  const t0 = sim.time;
+  while (!done() && sim.time - t0 < maxSeconds) sim.step();
+}
+
+describe('requests from the page', () => {
+  it('defers a hold requested on the runway until safely airborne, then holds there', () => {
+    const sim = new FlightSimulation({ world: WORLD });
+    expect(sim.holdAt('TEACH')).toBe(true);
+    expect(sim.phase).toBe('takeoff');
+    runUntil(sim, () => sim.phase === 'hold', 400);
+    expect(sim.phase).toBe('hold');
+    expect(sim.fms.wheelHeight).toBeGreaterThan(250);
+    // Fly to the fix and settle into the orbit.
+    runFor(sim, 360);
+    const hold = sim.fms.hold!;
+    expect(hold.fix.ident).toBe('TEACH');
+    expect(Math.abs(sim.distanceTo(hold.fix) - hold.radius)).toBeLessThan(200);
+    expect(Math.abs(sim.state[S.Y]! - hold.altitude)).toBeLessThan(15);
+    expect(sim.fms.fma.lateral).toBe('HOLD');
+  });
+
+  it('resumes the flight plan after a hold and lands without incident', () => {
+    const sim = new FlightSimulation({ world: WORLD });
+    sim.holdAt('LOGBK');
+    runUntil(sim, () => sim.phase === 'hold', 400);
+    runFor(sim, 240);
+    sim.resume();
+    expect(sim.fms.hold).toBeNull();
+    const next = sim.plan.legs[sim.fms.legIndex]!;
+    expect(next.ident).toBe('TEACH');
+    runUntil(sim, () => sim.phase === 'parked', 2400);
+    expect(sim.phase).toBe('parked');
+    expect(sim.incidents).toBe(0);
+  });
+
+  it('flies direct to a fix further down the route', () => {
+    const sim = new FlightSimulation({ world: WORLD });
+    expect(sim.directTo('RADIO')).toBe(false); // not on the runway
+    runUntil(sim, () => sim.phase === 'cruise', 600);
+    expect(sim.directTo('RADIO')).toBe(true);
+    expect(sim.plan.legs[sim.fms.legIndex]!.ident).toBe('RADIO');
+    runUntil(sim, () => sim.plan.legs[sim.fms.legIndex]!.ident !== 'RADIO', 900);
+    expect(sim.distanceTo(sim.findFix('RADIO')!)).toBeLessThan(3 * NM);
+    runUntil(sim, () => sim.phase === 'parked', 2400);
+    expect(sim.incidents).toBe(0);
+  });
+
+  it('ignores unknown fixes', () => {
+    const sim = new FlightSimulation({ world: WORLD });
+    expect(sim.holdAt('NOWHERE')).toBe(false);
+    expect(sim.directTo('NOWHERE')).toBe(false);
+  });
+});
+
+describe('integration', () => {
   it('is deterministic, bit for bit', () => {
-    const a = newSim();
-    const b = newSim();
-    a.setTarget('work');
-    b.setTarget('work');
-    runFor(a, 60);
-    runFor(b, 60);
+    const a = new FlightSimulation({ world: WORLD });
+    const b = new FlightSimulation({ world: WORLD });
+    runFor(a, 300);
+    runFor(b, 300);
     expect(Array.from(a.state)).toEqual(Array.from(b.state));
   });
 
   it('gives the same physics at any frame rate', () => {
-    const fixed = newSim();
-    const jittery = newSim();
-    fixed.setTarget('about');
-    jittery.setTarget('about');
-    const steps = 5000;
+    const fixed = new FlightSimulation({ world: WORLD });
+    const jittery = new FlightSimulation({ world: WORLD });
+    const steps = 20_000;
     for (let i = 0; i < steps; i++) fixed.step();
     // Irregular frame times, each shorter than one physics step.
     let seed = 42;
-    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     while (jittery.steps < steps) jittery.advance(jittery.dt * (0.1 + 0.8 * rand()));
     expect(Array.from(jittery.state)).toEqual(Array.from(fixed.state));
   });
 
-  it('climbs over rising terrain ahead', () => {
-    const ridge = (x: number) => 200 * smoothstep(3500, 4200, x) * (1 - smoothstep(4600, 5300, x));
-    const waypoints: Waypoint[] = [
-      { id: 'a', fix: 'AAAAA', x: 0, z: 0, altitude: 300, orbitRadius: 1200 },
-      { id: 'b', fix: 'BBBBB', x: 9000, z: 0, altitude: 300, orbitRadius: 1200 },
-    ];
-    const sim = new FlightSimulation({ waypoints, start: 'a', terrainHeight: (x) => ridge(x) });
-    sim.setTarget('b');
-    let minAgl = Infinity;
-    runUntil(sim, () => sim.mode === 'orbit', 400, () => {
-      minAgl = Math.min(minAgl, sim.state[S.Y]! - ridge(sim.state[S.X]!));
-    });
-    expect(sim.mode).toBe('orbit');
-    expect(minAgl).toBeGreaterThan(150);
+  it('can start partway through a flight (warm-up), still deterministically', () => {
+    const a = new FlightSimulation({ world: WORLD, warmup: 240 });
+    const b = new FlightSimulation({ world: WORLD });
+    runFor(b, 240);
+    expect(Array.from(a.state)).toEqual(Array.from(b.state));
+    expect(a.phase).not.toBe('takeoff');
   });
 
   it('keeps a bounded 10 Hz history for the strip chart', () => {
-    const sim = newSim();
+    const sim = new FlightSimulation({ world: WORLD });
     runFor(sim, 45);
     expect(sim.history.length).toBe(300);
     let last = -Infinity;
@@ -134,7 +209,6 @@ describe('flight simulation + autopilot', () => {
       expect(s.t).toBeGreaterThan(last);
       last = s.t;
     });
-    // Sampled every 0.1 s, so the newest sample is at most one period old.
     const age = sim.time - sim.history.latest()!.t;
     expect(age).toBeGreaterThanOrEqual(0);
     expect(age).toBeLessThan(0.1 + 1e-9);

@@ -1,34 +1,41 @@
-import type { Waypoint } from '../sim/simulation';
-import { AIRFIELD } from './terrain';
+import { AIRPORTS, ROUTE_FIXES } from './navdata';
 
 /**
- * The flight plan. Each stop is a section of the site and a waypoint in the world:
- * scroll to a section and the autopilot flies direct to its waypoint, then holds.
+ * The home page as a flight plan: each section is a fix (the hero is the home
+ * airport). In Read mode, scrolling to a section sends the aircraft to hold there.
  *
- * Shared by the page (the flight-plan list is rendered from it at build time)
- * and by the scene (markers, route line, autopilot targets).
+ * Shared by the page (the flight-plan list is rendered from it at build time) and by
+ * the scene (markers, labels).
  */
-export interface RouteStop extends Waypoint {
-  /** id of the page section this waypoint stands for */
+export interface RouteStop {
+  /** Route stop id (also used as the waypoint id on the page). */
+  id: string;
+  /** Fix or airport ident. */
+  fix: string;
+  /** id of the page section this stop stands for. */
   section: string;
-  /** plain-language name shown next to the fix */
+  /** Plain-language name shown next to the fix. */
   label: string;
+  x: number;
+  z: number;
 }
 
-const HOLD = 1250;
+const LABELS: Record<string, string> = {
+  about: 'About',
+  work: 'Selected work',
+  experience: 'Experience',
+  beyond: 'Robotics & teaching',
+  contact: 'Contact',
+};
+
+const home = AIRPORTS[0]!;
 
 export const ROUTE: readonly RouteStop[] = [
-  { id: 'home', fix: 'KJWU', section: 'top', label: 'Home', x: AIRFIELD.x, z: AIRFIELD.z, altitude: 780, orbitRadius: HOLD },
-  { id: 'about', fix: 'ABOUT', section: 'about', label: 'About', x: 5200, z: -1800, altitude: 880, orbitRadius: HOLD },
-  { id: 'work', fix: 'WORKS', section: 'work', label: 'Selected work', x: 2000, z: -900, altitude: 960, orbitRadius: HOLD },
-  { id: 'experience', fix: 'LOGBK', section: 'experience', label: 'Experience', x: -1200, z: -2400, altitude: 920, orbitRadius: HOLD },
-  { id: 'beyond', fix: 'TEACH', section: 'beyond', label: 'Robotics & teaching', x: -4300, z: -600, altitude: 1010, orbitRadius: HOLD },
-  { id: 'contact', fix: 'RADIO', section: 'contact', label: 'Contact', x: -7400, z: -2000, altitude: 1060, orbitRadius: HOLD },
+  { id: 'home', fix: home.ident, section: 'top', label: 'Home', x: home.x, z: home.z },
+  ...ROUTE_FIXES.map((f) => ({ id: f.section!, fix: f.ident, section: f.section!, label: LABELS[f.section!]!, x: f.x, z: f.z })),
 ];
 
-export const START_STOP = ROUTE[0]!;
-
-/** Direction *toward* the sun: low in the west-southwest, a few degrees up. Dusk. */
+/** Direction toward the sun: low in the west-southwest, a few degrees up. Dusk. */
 export const SUN = {
   azimuth: (262 * Math.PI) / 180,
   elevation: (3.5 * Math.PI) / 180,
