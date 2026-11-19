@@ -215,7 +215,8 @@ export class Hud {
           dir.className = 'dir';
           dir.dataset.dir = l.ident;
           dir.textContent = 'DIR';
-          dir.setAttribute('aria-label', `Fly direct to ${l.ident} (${section.label})`);
+          // The accessible name starts with the visible text.
+          dir.setAttribute('aria-label', `DIR: fly direct to ${l.ident} (${section.label})`);
           sub.append(dir);
         } else {
           const span = document.createElement('span');

@@ -32,6 +32,25 @@ résumé always works no matter what the 3D is doing.
 ### Deployment
 - GitHub Actions: test, type-check and build on pull requests; deploy to Pages from `main`.
 
+### Milestone 5: a real flight, Fly by default, and a cockpit
+- **Simulation:** flaps and gear aerodynamics, fuel-burn mass, thrust lapse and reverse,
+  steady wind, and a ground roll with braking.
+- **Planner:** runway into the wind, VA/DF/TF legs, MEA from terrain, IFR semicircular
+  cruise, TOC/TOD, an RNAV-style approach with TAA-style entry, per-segment time and fuel,
+  METARs and a briefing.
+- **FMS:** takeoff to parked, fly-by and fly-over turns, holds, direct-to, an FMA; a
+  simplified pressurization controller; one FlightData snapshot for every display.
+- **World:**
+  - two airports with marked runways, taxiways and aprons;
+  - edge, threshold and end lights, sequenced approach lights and PAPI;
+  - a terrain mesh built in a Web Worker.
+- **Aircraft:** a lofted fuselage with a livery; airfoil wings; moving flaps, ailerons,
+  elevators and rudder; retracting gear; landing lights.
+- **Views:** Fly by default (session-remembered) and Read; chase, orbit and cockpit cameras
+  with blended transitions; drag, zoom, pinch and keyboard.
+- **Cockpit:** PFD, ND, engines, MFD (engines, fuel, pressurization, vertical profile), CDU
+  (legs, progress, performance, direct-to, hold) and MCP, all live and clickable.
+
 ## Your turn (content only you can write)
 
 1. **Rewrite the bio** in `src/data/profile.ts` (`about`) in your own voice. The current
@@ -65,12 +84,12 @@ résumé always works no matter what the 3D is doing.
 
 ## Next milestones
 
-- **M5: Interactive pressurization demo.** A simplified, clearly labeled cabin-pressure
-  model with a controller you can disturb (change altitude, open a valve, watch it
-  recover), embedded in the C-130J case study. 2D canvas, so it works everywhere.
-- **M6: "Take the controls".** Keyboard, touch or gamepad flying, with the autopilot
+- **M6: Interactive pressurization demo.** The controller now runs in the sim (MFD AIR
+  page). Next: a 2D-canvas version you can disturb (change altitude, open a valve, watch it
+  recover), embedded in the C-130J case study.
+- **M7: "Take the controls".** Keyboard, touch or gamepad flying, with the autopilot
   as a stability augmentation you can switch off. Opt-in, never in the way of reading.
-- **M7: Polish.**
+- **M8: Polish.**
   - a custom domain;
   - Lighthouse CI budgets on pull requests;
   - privacy-friendly analytics (e.g. Plausible or GoatCounter);

@@ -57,8 +57,8 @@ export async function startScene(opts: SceneOptions): Promise<SceneController> {
   const scene = new Scene();
   const camera = new PerspectiveCamera(38, 1, 3, 125_000);
 
-  // The poster is a fixed moment of the climb-out; a visit starts just after lift-off.
-  const sim = new FlightSimulation({ world: WORLD, warmup: opts.startAt ?? (opts.poster ? 150 : 36) });
+  // The poster is a fixed moment on final approach; a visit starts just after lift-off.
+  const sim = new FlightSimulation({ world: WORLD, warmup: opts.startAt ?? (opts.poster ? 585 : 36) });
   const bus = new FlightDataBus(sim);
   const pose = createRenderState();
   const body = new Quaternion();

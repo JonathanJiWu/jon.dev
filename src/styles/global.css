@@ -345,6 +345,11 @@ html.js[data-view='fly'] .eng-panel {
   max-height: calc(100vh - var(--header-h) - 6rem);
 }
 
+/* The skip link moves focus to <main> programmatically; it isn't a control, so no ring. */
+main:focus {
+  outline: none;
+}
+
 /* Keep page content above the fixed scene. */
 main,
 .site-footer {
